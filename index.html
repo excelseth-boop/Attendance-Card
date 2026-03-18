@@ -113,9 +113,8 @@ body{
 .leg-item{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9px;font-weight:600;color:var(--text2)}
 .leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 
-/* ── SESSION UNLOCK ── */
-// Once PIN is verified once per session, all locked entries open freely
-let pinVerifiedSession = false;
+/* ── SESSION FLAG ── */
+let pinVerifiedSession = false; // true after PIN entered once this session
 
 /* ── CALENDAR ── */
 .calendar-wrap{padding:9px 10px 6px}
@@ -285,6 +284,21 @@ let pinVerifiedSession = false;
   </div>
 </div>
 
+
+<!-- ── OLD PIN VERIFY MODAL (for PIN change) ── -->
+<div class="pin-modal-overlay" id="oldPinOverlay">
+  <div class="pin-modal">
+    <h3>🔑 Enter Current PIN</h3>
+    <div class="pin-sub">Verify your current PIN before setting a new one</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="op0"></div><div class="pin-dot" id="op1"></div>
+      <div class="pin-dot" id="op2"></div><div class="pin-dot" id="op3"></div>
+    </div>
+    <div class="pin-error-msg" id="oldPinErr"></div>
+    <div class="pin-grid" id="oldPinGrid"></div>
+    <button class="pin-cancel-btn" onclick="document.getElementById('oldPinOverlay').classList.remove('open')">Cancel</button>
+  </div>
+</div>
 <!-- ── PIN SETUP MODAL ── -->
 <div class="pin-modal-overlay" id="pinSetupOverlay">
   <div class="pin-modal">
@@ -434,7 +448,6 @@ const ICONS  = ['','✓','½','✗','★'];
 const LABELS = ['Unmarked','Full Day Present','Half Day Present','Absent','Paid Holiday'];
 const META_KEY = 'att_meta_v3';
 const PIN_KEY  = 'att_admin_pin';
-const LOCK_MS  = 2 * 60 * 1000;
 const MAX_EMP  = 10;
 
 let today = new Date(), viewYear = today.getFullYear(), viewMonth = today.getMonth(), currentEmpId = null;
@@ -466,20 +479,11 @@ function payKey(id,y,m){ return 'pay_'+id+'_'+y+'_'+m; }
 function loadPay(id){ try{ return JSON.parse(localStorage.getItem(payKey(id,viewYear,viewMonth)))||[]; }catch(e){return[];} }
 function savePay(id,d){ localStorage.setItem(payKey(id,viewYear,viewMonth), JSON.stringify(d)); }
 
-/* ── LOCK/STAMP ── */
-function stampKey(id,y,m,d){ return 'stamp_'+id+'_'+y+'_'+m+'_'+d; }
-function getStamp(id,d){ const v=localStorage.getItem(stampKey(id,viewYear,viewMonth,d)); return v?parseInt(v):null; }
-function setStamp(id,d){ localStorage.setItem(stampKey(id,viewYear,viewMonth,d), Date.now()); }
-function isDayLocked(id,d){
-  if(!localStorage.getItem(PIN_KEY)) return false; // no PIN set = never locked
-  if(pinVerifiedSession) return false;              // PIN already entered this session
-  const att=loadAtt(id); if(!att[d]) return false; // unmarked = not locked
-  const s=getStamp(id,d);
-  if(!s) return false;                              // no stamp = old entry, free edit
-  return (Date.now()-s)>LOCK_MS;                   // locked if stamp older than 2 min
-}
+/* ── PIN LOCK ── */
+// If PIN is set: first tap of session asks for PIN, then all edits open freely
 function hasPin(){ return !!localStorage.getItem(PIN_KEY); }
 function getPin(){ return localStorage.getItem(PIN_KEY)||''; }
+function isLocked(){ return hasPin() && !pinVerifiedSession; }
 
 /* ── EMPLOYEE DROPDOWN ── */
 function populateDropdown(selId){
@@ -528,9 +532,8 @@ async function deleteEmployee(){
   showToast(emp.name+' deleted');
 }
 
-/* ── SESSION UNLOCK ── */
-// Once PIN is verified once per session, all locked entries open freely
-let pinVerifiedSession = false;
+/* ── SESSION FLAG ── */
+let pinVerifiedSession = false; // true after PIN entered once this session
 
 /* ── CALENDAR ── */
 function buildCalendar(){
@@ -546,7 +549,7 @@ function buildCalendar(){
     const dow=new Date(viewYear,viewMonth,d).getDay();
     const isTod=(d===today.getDate()&&viewMonth===today.getMonth()&&viewYear===today.getFullYear());
     const state=att[d]||0;
-    const locked=currentEmpId&&isDayLocked(currentEmpId,d);
+    const locked=currentEmpId&&att[d]&&isLocked();
     cell.className='day-cell state-'+state+(isTod?' today-cell':'')+(dow===0?' is-sun':dow===6?' is-sat':'')+(locked?' locked':'');
     const icon=locked&&state>0?'🔒':ICONS[state];
     cell.innerHTML='<div class="d-num">'+d+'</div><div class="d-day">'+DAYS[dow]+'</div><div class="d-icon">'+icon+'</div>';
@@ -558,18 +561,14 @@ function buildCalendar(){
 
 
 function tapDay(d,cell){
-  if(isDayLocked(currentEmpId,d)){
-    openPinVerify(()=>{
-      pinVerifiedSession = true; // unlock ALL locked entries for this session
-      doTap(d);
-    });
+  if(isLocked()){
+    openPinVerify(()=>{ pinVerifiedSession=true; doTap(d); });
     return;
   }
   doTap(d);
 }
 function doTap(d){
   const att=loadAtt(currentEmpId), cur=att[d]||0, nxt=(cur+1)%5;
-  if(cur===0) setStamp(currentEmpId,d); // stamp only when first marked
   att[d]=nxt; saveAtt(currentEmpId,att);
   showToast(LABELS[nxt]); buildCalendar();
 }
@@ -662,8 +661,7 @@ function buildKeypad(gridId,onDigit,onDel){
 let setupStep=0,setupFirst='',setupBuf='';
 function openPinSetup(){
   if(hasPin()){
-    // must verify old PIN first
-    openPinVerify(()=>startPinSetup());
+    openOldPinVerify(()=>startPinSetup());
   } else {
     startPinSetup();
   }
@@ -696,6 +694,30 @@ function pinSetupDigit(d){
   },80);
 }
 function pinSetupDel(){ setupBuf=setupBuf.slice(0,-1); updSetupDots(); }
+
+/* separate verify for PIN change so it doesn't conflict with tap-unlock */
+let oldPinBuf='';
+function openOldPinVerify(onSuccess){
+  oldPinBuf='';
+  document.getElementById('oldPinErr').textContent='';
+  updOldPinDots();
+  buildKeypad('oldPinGrid', (d)=>{
+    if(oldPinBuf.length>=4) return;
+    oldPinBuf+=d; updOldPinDots();
+    if(oldPinBuf.length===4) setTimeout(()=>{
+      if(oldPinBuf===getPin()){
+        document.getElementById('oldPinOverlay').classList.remove('open');
+        onSuccess();
+      } else {
+        document.getElementById('oldPinErr').textContent='Wrong PIN.';
+        for(let i=0;i<4;i++) document.getElementById('op'+i).className='pin-dot error';
+        setTimeout(()=>{ oldPinBuf=''; updOldPinDots(); document.getElementById('oldPinErr').textContent=''; },700);
+      }
+    },80);
+  }, ()=>{ oldPinBuf=oldPinBuf.slice(0,-1); updOldPinDots(); });
+  document.getElementById('oldPinOverlay').classList.add('open');
+}
+function updOldPinDots(){ for(let i=0;i<4;i++) document.getElementById('op'+i).className='pin-dot'+(i<oldPinBuf.length?' filled':''); }
 
 let verifyBuf='',verifyCb=null;
 function openPinVerify(onSuccess){ verifyBuf='';verifyCb=onSuccess; document.getElementById('pinVerifyErr').textContent=''; updVerifyDots(); buildKeypad('pinVerifyGrid',pinVerifyDigit,pinVerifyDel); document.getElementById('pinVerifyOverlay').classList.add('open'); }
