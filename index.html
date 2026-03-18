@@ -723,7 +723,7 @@ function updVerifyDots(){ for(let i=0;i<4;i++) document.getElementById('vd'+i).c
 function pinVerifyDigit(d){
   if(verifyBuf.length>=4) return; verifyBuf+=d; updVerifyDots();
   if(verifyBuf.length===4) setTimeout(()=>{
-    if(verifyBuf===getPin()){ closePinVerify(); if(verifyCb) verifyCb(); }
+    if(verifyBuf===getPin()){ const cb=verifyCb; closePinVerify(); if(cb) cb(); }
     else {
       document.getElementById('pinVerifyErr').textContent='Wrong PIN. Try again.';
       for(let i=0;i<4;i++) document.getElementById('vd'+i).className='pin-dot error';
