@@ -114,8 +114,8 @@ body{
 .leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 
 /* ── SESSION UNLOCK ── */
-const sessionUnlocked = new Set();
-function sessionKey(empId,d){ return ''+empId+'_'+viewYear+'_'+viewMonth+'_'+d; }
+// Once PIN is verified once per session, all locked entries open freely
+let pinVerifiedSession = false;
 
 /* ── CALENDAR ── */
 .calendar-wrap{padding:9px 10px 6px}
@@ -471,11 +471,12 @@ function stampKey(id,y,m,d){ return 'stamp_'+id+'_'+y+'_'+m+'_'+d; }
 function getStamp(id,d){ const v=localStorage.getItem(stampKey(id,viewYear,viewMonth,d)); return v?parseInt(v):null; }
 function setStamp(id,d){ localStorage.setItem(stampKey(id,viewYear,viewMonth,d), Date.now()); }
 function isDayLocked(id,d){
-  if(!localStorage.getItem(PIN_KEY)) return false;
-  const att=loadAtt(id); if(!att[d]) return false;
+  if(!localStorage.getItem(PIN_KEY)) return false; // no PIN set = never locked
+  if(pinVerifiedSession) return false;              // PIN already entered this session
+  const att=loadAtt(id); if(!att[d]) return false; // unmarked = not locked
   const s=getStamp(id,d);
-  if(!s) return false; // no stamp = old entry, allow free edit
-  return (Date.now()-s)>LOCK_MS;
+  if(!s) return false;                              // no stamp = old entry, free edit
+  return (Date.now()-s)>LOCK_MS;                   // locked if stamp older than 2 min
 }
 function hasPin(){ return !!localStorage.getItem(PIN_KEY); }
 function getPin(){ return localStorage.getItem(PIN_KEY)||''; }
@@ -528,8 +529,8 @@ async function deleteEmployee(){
 }
 
 /* ── SESSION UNLOCK ── */
-const sessionUnlocked = new Set();
-function sessionKey(empId,d){ return ''+empId+'_'+viewYear+'_'+viewMonth+'_'+d; }
+// Once PIN is verified once per session, all locked entries open freely
+let pinVerifiedSession = false;
 
 /* ── CALENDAR ── */
 function buildCalendar(){
@@ -545,8 +546,7 @@ function buildCalendar(){
     const dow=new Date(viewYear,viewMonth,d).getDay();
     const isTod=(d===today.getDate()&&viewMonth===today.getMonth()&&viewYear===today.getFullYear());
     const state=att[d]||0;
-    const sk2=sessionKey(currentEmpId,d);
-    const locked=currentEmpId&&hasPin()&&isDayLocked(currentEmpId,d)&&!sessionUnlocked.has(sk2);
+    const locked=currentEmpId&&isDayLocked(currentEmpId,d);
     cell.className='day-cell state-'+state+(isTod?' today-cell':'')+(dow===0?' is-sun':dow===6?' is-sat':'')+(locked?' locked':'');
     const icon=locked&&state>0?'🔒':ICONS[state];
     cell.innerHTML='<div class="d-num">'+d+'</div><div class="d-day">'+DAYS[dow]+'</div><div class="d-icon">'+icon+'</div>';
@@ -558,12 +558,9 @@ function buildCalendar(){
 
 
 function tapDay(d,cell){
-  const sk = sessionKey(currentEmpId,d);
-  if(hasPin() && isDayLocked(currentEmpId,d) && !sessionUnlocked.has(sk)){
+  if(isDayLocked(currentEmpId,d)){
     openPinVerify(()=>{
-      sessionUnlocked.add(sk);
-      // stamp now so the day is no longer "stampless" after doTap
-      setStamp(currentEmpId,d);
+      pinVerifiedSession = true; // unlock ALL locked entries for this session
       doTap(d);
     });
     return;
@@ -572,8 +569,7 @@ function tapDay(d,cell){
 }
 function doTap(d){
   const att=loadAtt(currentEmpId), cur=att[d]||0, nxt=(cur+1)%5;
-  // always stamp on first mark; re-stamp after PIN unlock to refresh window
-  setStamp(currentEmpId,d);
+  if(cur===0) setStamp(currentEmpId,d); // stamp only when first marked
   att[d]=nxt; saveAtt(currentEmpId,att);
   showToast(LABELS[nxt]); buildCalendar();
 }
