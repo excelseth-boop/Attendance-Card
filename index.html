@@ -465,11 +465,12 @@ function savePay(id,d){ localStorage.setItem(payKey(id,viewYear,viewMonth), JSON
 /* ── LOCK/STAMP ── */
 function stampKey(id,y,m,d){ return 'stamp_'+id+'_'+y+'_'+m+'_'+d; }
 function getStamp(id,d){ const v=localStorage.getItem(stampKey(id,viewYear,viewMonth,d)); return v?parseInt(v):null; }
-function setStamp(id,d){ if(!getStamp(id,d)) localStorage.setItem(stampKey(id,viewYear,viewMonth,d), Date.now()); }
+function setStamp(id,d){ localStorage.setItem(stampKey(id,viewYear,viewMonth,d), Date.now()); }
 function isDayLocked(id,d){
   if(!localStorage.getItem(PIN_KEY)) return false;
   const att=loadAtt(id); if(!att[d]) return false;
-  const s=getStamp(id,d); if(!s) return true;
+  const s=getStamp(id,d);
+  if(!s) return false; // no stamp = old entry, allow free edit
   return (Date.now()-s)>LOCK_MS;
 }
 function hasPin(){ return !!localStorage.getItem(PIN_KEY); }
@@ -536,7 +537,8 @@ function buildCalendar(){
     const dow=new Date(viewYear,viewMonth,d).getDay();
     const isTod=(d===today.getDate()&&viewMonth===today.getMonth()&&viewYear===today.getFullYear());
     const state=att[d]||0;
-    const locked=currentEmpId&&hasPin()&&isDayLocked(currentEmpId,d);
+    const sk2=sessionKey(currentEmpId,d);
+    const locked=currentEmpId&&hasPin()&&isDayLocked(currentEmpId,d)&&!sessionUnlocked.has(sk2);
     cell.className='day-cell state-'+state+(isTod?' today-cell':'')+(dow===0?' is-sun':dow===6?' is-sat':'')+(locked?' locked':'');
     const icon=locked&&state>0?'🔒':ICONS[state];
     cell.innerHTML='<div class="d-num">'+d+'</div><div class="d-day">'+DAYS[dow]+'</div><div class="d-icon">'+icon+'</div>';
@@ -553,14 +555,20 @@ function sessionKey(empId,d){ return empId+'_'+viewYear+'_'+viewMonth+'_'+d; }
 function tapDay(d,cell){
   const sk = sessionKey(currentEmpId,d);
   if(hasPin() && isDayLocked(currentEmpId,d) && !sessionUnlocked.has(sk)){
-    openPinVerify(()=>{ sessionUnlocked.add(sk); doTap(d); });
+    openPinVerify(()=>{
+      sessionUnlocked.add(sk);
+      // stamp now so the day is no longer "stampless" after doTap
+      setStamp(currentEmpId,d);
+      doTap(d);
+    });
     return;
   }
   doTap(d);
 }
 function doTap(d){
   const att=loadAtt(currentEmpId), cur=att[d]||0, nxt=(cur+1)%5;
-  if(cur===0) setStamp(currentEmpId,d);
+  // always stamp on first mark; re-stamp after PIN unlock to refresh window
+  setStamp(currentEmpId,d);
   att[d]=nxt; saveAtt(currentEmpId,att);
   showToast(LABELS[nxt]); buildCalendar();
 }
