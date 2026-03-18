@@ -113,9 +113,6 @@ body{
 .leg-item{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9px;font-weight:600;color:var(--text2)}
 .leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 
-/* ── SESSION FLAG ── */
-let pinVerifiedSession = false; // true after PIN entered once this session
-
 /* ── CALENDAR ── */
 .calendar-wrap{padding:9px 10px 6px}
 .day-headers{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
@@ -442,6 +439,9 @@ let pinVerifiedSession = false; // true after PIN entered once this session
 <div class="toast" id="toast"></div>
 
 <script>
+/* single global flag - declared first so all functions can access it */
+let pinVerifiedSession = false;
+
 const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const ICONS  = ['','✓','½','✗','★'];
@@ -531,9 +531,6 @@ async function deleteEmployee(){
   populateDropdown(null); loadCurrentRate(); buildCalendar();
   showToast(emp.name+' deleted');
 }
-
-/* ── SESSION FLAG ── */
-let pinVerifiedSession = false; // true after PIN entered once this session
 
 /* ── CALENDAR ── */
 function buildCalendar(){
