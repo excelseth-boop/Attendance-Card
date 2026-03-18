@@ -113,6 +113,10 @@ body{
 .leg-item{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9px;font-weight:600;color:var(--text2)}
 .leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 
+/* ── SESSION UNLOCK ── */
+const sessionUnlocked = new Set();
+function sessionKey(empId,d){ return ''+empId+'_'+viewYear+'_'+viewMonth+'_'+d; }
+
 /* ── CALENDAR ── */
 .calendar-wrap{padding:9px 10px 6px}
 .day-headers{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
@@ -285,7 +289,7 @@ body{
 <div class="pin-modal-overlay" id="pinSetupOverlay">
   <div class="pin-modal">
     <h3>🔐 Set Admin PIN</h3>
-    <div class="pin-sub" id="pinSetupSub">Create a 4-digit PIN to protect edits</div>
+    <div class="pin-sub" id="pinSetupSub">Enter a new 4-digit PIN</div>
     <div class="pin-dots">
       <div class="pin-dot" id="sd0"></div><div class="pin-dot" id="sd1"></div>
       <div class="pin-dot" id="sd2"></div><div class="pin-dot" id="sd3"></div>
@@ -523,6 +527,10 @@ async function deleteEmployee(){
   showToast(emp.name+' deleted');
 }
 
+/* ── SESSION UNLOCK ── */
+const sessionUnlocked = new Set();
+function sessionKey(empId,d){ return ''+empId+'_'+viewYear+'_'+viewMonth+'_'+d; }
+
 /* ── CALENDAR ── */
 function buildCalendar(){
   const firstDay=new Date(viewYear,viewMonth,1).getDay();
@@ -548,9 +556,6 @@ function buildCalendar(){
   updateStats();
 }
 
-// Session-unlocked days: after PIN verified, no re-ask until page reload
-const sessionUnlocked = new Set();
-function sessionKey(empId,d){ return empId+'_'+viewYear+'_'+viewMonth+'_'+d; }
 
 function tapDay(d,cell){
   const sk = sessionKey(currentEmpId,d);
@@ -660,8 +665,16 @@ function buildKeypad(gridId,onDigit,onDel){
 }
 let setupStep=0,setupFirst='',setupBuf='';
 function openPinSetup(){
+  if(hasPin()){
+    // must verify old PIN first
+    openPinVerify(()=>startPinSetup());
+  } else {
+    startPinSetup();
+  }
+}
+function startPinSetup(){
   setupStep=0;setupFirst='';setupBuf='';
-  document.getElementById('pinSetupSub').textContent='Create a 4-digit PIN to protect edits';
+  document.getElementById('pinSetupSub').textContent='Enter a new 4-digit PIN';
   document.getElementById('pinSetupErr').textContent='';
   updSetupDots(); buildKeypad('pinSetupGrid',pinSetupDigit,pinSetupDel);
   document.getElementById('pinSetupOverlay').classList.add('open');
