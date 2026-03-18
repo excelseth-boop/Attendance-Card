@@ -546,8 +546,16 @@ function buildCalendar(){
   updateStats();
 }
 
+// Session-unlocked days: after PIN verified, no re-ask until page reload
+const sessionUnlocked = new Set();
+function sessionKey(empId,d){ return empId+'_'+viewYear+'_'+viewMonth+'_'+d; }
+
 function tapDay(d,cell){
-  if(hasPin()&&isDayLocked(currentEmpId,d)){ openPinVerify(()=>doTap(d)); return; }
+  const sk = sessionKey(currentEmpId,d);
+  if(hasPin() && isDayLocked(currentEmpId,d) && !sessionUnlocked.has(sk)){
+    openPinVerify(()=>{ sessionUnlocked.add(sk); doTap(d); });
+    return;
+  }
   doTap(d);
 }
 function doTap(d){
