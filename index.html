@@ -5,690 +5,313 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>Attendance Card</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<title>Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #eef0f4;
-    --surface: #ffffff;
-    --surface2: #f5f6f9;
-    --border: #d8dce8;
-    --text: #0e1117;
-    --text2: #2e3345;
-    --muted: #6b7290;
-    --accent: #1a5fe8;
+:root {
+  --bg:#eef0f4; --surface:#fff; --surface2:#f5f6f9; --border:#d8dce8;
+  --text:#0e1117; --text2:#2e3345; --muted:#6b7290; --accent:#1a5fe8;
+  --green:#008000; --green-bg:#b8ffcc; --green-border:#00e040; --green-num:#005200;
+  --yellow:#b8a000; --yellow-bg:#fffa80; --yellow-border:#ffe000; --yellow-num:#6b5c00;
+  --red:#e00010; --red-bg:#ffb0b5; --red-border:#ff2030; --red-num:#8c0008;
+  --grey:#323d5c; --grey-bg:#e8eaf2; --grey-border:#8e99be; --grey-num:#222a45;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',sans-serif;font-weight:400;
+  -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
+}
 
-    --green: #008000;
-    --green-bg: #b8ffcc;
-    --green-border: #00e040;
-    --green-num: #005200;
+/* ── HEADER (fixed top) ── */
+.header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:10px 12px 8px;
+  flex-shrink:0;
+  box-shadow:0 2px 6px rgba(0,0,0,0.07);
+}
 
-    --yellow: #b8a000;
-    --yellow-bg: #fffa80;
-    --yellow-border: #ffe000;
-    --yellow-num: #6b5c00;
+/* Employee row */
+.emp-row{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.emp-select-wrap{position:relative;flex:1}
+.emp-select{
+  width:100%;appearance:none;-webkit-appearance:none;
+  background:var(--surface2);border:1.5px solid var(--accent);
+  border-radius:8px;color:var(--text);
+  font-family:'Inter',sans-serif;font-size:14px;font-weight:700;
+  padding:6px 28px 6px 10px;outline:none;cursor:pointer;
+}
+.emp-select-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--accent);font-size:11px}
+.icon-btn{
+  border-radius:8px;font-size:16px;font-weight:700;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;transition:opacity 0.15s;border:none;
+}
+.icon-btn:active{opacity:0.7}
+.add-btn{background:var(--accent);color:#fff}
+.del-btn{background:var(--red-bg);border:1.5px solid var(--red-border) !important;color:var(--red)}
 
-    --red: #e00010;
-    --red-bg: #ffb0b5;
-    --red-border: #ff2030;
-    --red-num: #8c0008;
+/* Month + rate row */
+.mid-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.month-nav{display:flex;align-items:center;gap:6px}
+.nav-btn{
+  background:var(--surface2);border:1.5px solid var(--border);color:var(--text2);
+  width:28px;height:28px;border-radius:7px;font-size:16px;font-weight:600;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+.nav-btn:active{background:var(--border)}
+.month-label{font-size:12px;font-weight:700;color:var(--accent);min-width:100px;text-align:center}
+.rate-wrap{display:flex;align-items:center;gap:5px}
+.rate-wrap label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.rate-input{
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:7px;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;
+  padding:4px 7px;width:80px;outline:none;
+}
+.rate-input:focus{border-color:var(--accent)}
 
-    --grey: #323d5c;
-    --grey-bg: #e8eaf2;
-    --grey-border: #8e99be;
-    --grey-num: #222a45;
-  }
+/* Action buttons */
+.action-row{display:flex;gap:6px;margin-bottom:7px}
+.action-btn{
+  flex:1;border-radius:8px;font-family:'Inter',sans-serif;
+  font-size:11px;font-weight:700;padding:6px 4px;cursor:pointer;
+  border:1.5px solid;transition:opacity 0.15s;text-align:center;
+}
+.action-btn:active{opacity:0.7}
+.reset-action{background:var(--red-bg);border-color:var(--red-border);color:var(--red-num)}
+.pin-action{background:#eaf0ff;border-color:#92b4f5;color:var(--accent)}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* Stats bar */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
+.stat-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:5px 3px;text-align:center}
+.stat-val{font-size:18px;font-weight:700;line-height:1;letter-spacing:-0.5px}
+.stat-val.green{color:var(--green)}.stat-val.yellow{color:var(--yellow)}
+.stat-val.red{color:var(--red)}.stat-val.grey{color:var(--grey)}
+.stat-lbl{font-size:8px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-top:1px}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-weight: 400;
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+/* Totals row */
+.totals-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px}
+.total-pill{background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:5px 4px;text-align:center}
+.total-pill .t-label{font-size:8px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px}
+.total-pill .t-val{font-size:13px;font-weight:700;color:var(--text);margin-top:1px;letter-spacing:-0.3px}
+.total-pill.highlight{border-color:#92b4f5;background:#eaf0ff}
+.total-pill.highlight .t-val{color:var(--accent)}
 
-  /* ── HEADER ── */
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 16px 12px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-  }
+/* ── SCROLLABLE BODY ── */
+.scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0}
 
-  /* ── EMPLOYEE ROW ── */
-  .emp-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
+/* Legend */
+.legend{
+  display:flex;gap:12px;padding:6px 12px;
+  border-bottom:1px solid var(--border);background:var(--surface);
+  overflow-x:auto;scrollbar-width:none;flex-shrink:0;
+}
+.legend::-webkit-scrollbar{display:none}
+.leg-item{display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9px;font-weight:600;color:var(--text2)}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
 
-  .emp-select-wrap {
-    position: relative;
-    flex: 1;
-  }
+/* ── CALENDAR ── */
+.calendar-wrap{padding:9px 10px 6px}
+.day-headers{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px}
+.day-hdr{text-align:center;font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.3px;padding:2px 0}
+.day-hdr.sun{color:var(--red)}.day-hdr.sat{color:var(--accent)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.day-cell{
+  aspect-ratio:1;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--surface);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;cursor:pointer;
+  user-select:none;-webkit-user-select:none;
+  transition:transform 0.1s;
+  box-shadow:0 1px 2px rgba(0,0,0,0.05);
+}
+.day-cell:active{transform:scale(0.84)}
+.day-cell.empty{background:transparent;border-color:transparent;pointer-events:none;box-shadow:none}
+.day-cell .d-num{font-size:16px;font-weight:600;line-height:1;color:var(--text);letter-spacing:-0.3px}
+.day-cell .d-day{font-size:7px;font-weight:600;color:var(--muted);margin-top:1px;letter-spacing:0.3px;text-transform:uppercase}
+.day-cell .d-icon{font-size:8px;font-weight:700;margin-top:1px;line-height:1;color:var(--muted)}
 
-  .emp-select {
-    width: 100%;
-    appearance: none;
-    -webkit-appearance: none;
-    background: var(--surface2);
-    border: 1.5px solid var(--accent);
-    border-radius: 9px;
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    padding: 7px 34px 7px 12px;
-    outline: none;
-    cursor: pointer;
-    letter-spacing: -0.2px;
-  }
-  .emp-select:focus { border-color: var(--accent); }
+.day-cell.state-1{background:var(--green-bg);border-color:var(--green-border)}
+.day-cell.state-1 .d-num{color:var(--green-num)}.day-cell.state-1 .d-day{color:var(--green)}.day-cell.state-1 .d-icon{color:var(--green)}
+.day-cell.state-2{background:var(--yellow-bg);border-color:var(--yellow-border)}
+.day-cell.state-2 .d-num{color:var(--yellow-num)}.day-cell.state-2 .d-day{color:var(--yellow)}.day-cell.state-2 .d-icon{color:var(--yellow)}
+.day-cell.state-3{background:var(--red-bg);border-color:var(--red-border)}
+.day-cell.state-3 .d-num{color:var(--red-num)}.day-cell.state-3 .d-day{color:var(--red)}.day-cell.state-3 .d-icon{color:var(--red)}
+.day-cell.state-4{background:var(--grey-bg);border-color:var(--grey-border)}
+.day-cell.state-4 .d-num{color:var(--grey-num)}.day-cell.state-4 .d-day{color:var(--grey)}.day-cell.state-4 .d-icon{color:var(--grey)}
+.day-cell.today-cell{box-shadow:0 0 0 2px var(--accent)}
+.day-cell.is-sun.state-0 .d-num{color:var(--red);opacity:0.6}
+.day-cell.is-sat.state-0 .d-num{color:var(--accent);opacity:0.6}
+.day-cell.locked{cursor:not-allowed !important}
 
-  .emp-select-arrow {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: var(--accent);
-    font-size: 13px;
-  }
+/* ── PAYMENT SECTION ── */
+.payment-wrap{
+  margin:8px 10px 24px;background:var(--surface);
+  border:1.5px solid var(--border);border-radius:12px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,0.06);
+}
+.payment-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:9px 12px 8px;border-bottom:1.5px solid var(--border);background:var(--surface2);
+}
+.payment-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px}
+.add-payment-btn{
+  background:var(--accent);border:none;border-radius:6px;color:#fff;
+  font-family:'Inter',sans-serif;font-size:11px;font-weight:700;
+  padding:4px 10px;cursor:pointer;
+}
+.add-payment-btn:active{opacity:0.75}
+.balance-bar{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1.5px solid var(--border)}
+.bal-cell{padding:7px 6px;text-align:center;border-right:1px solid var(--border)}
+.bal-cell:last-child{border-right:none}
+.bal-label{font-size:8px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px}
+.bal-val{font-size:13px;font-weight:700;margin-top:2px;letter-spacing:-0.3px}
+.bal-val.earned{color:var(--accent)}.bal-val.paid{color:var(--green)}
+.bal-val.due{color:var(--red)}.bal-val.zero{color:var(--muted)}
+.payment-empty{padding:14px;text-align:center;font-size:11px;color:var(--muted);font-style:italic}
+.payment-item{display:flex;align-items:center;padding:9px 12px;border-bottom:1px solid var(--border);gap:9px}
+.payment-item:last-child{border-bottom:none}
+.pay-icon{width:30px;height:30px;border-radius:7px;background:var(--green-bg);border:1.5px solid var(--green-border);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.pay-info{flex:1;min-width:0}
+.pay-amount{font-size:14px;font-weight:700;color:var(--green-num);letter-spacing:-0.3px}
+.pay-date{font-size:10px;font-weight:500;color:var(--muted);margin-top:1px}
+.pay-del{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:3px 5px;border-radius:5px;line-height:1}
+.pay-del:active{color:var(--red);background:var(--red-bg)}
 
-  .add-emp-btn {
-    background: var(--accent);
-    border: none;
-    border-radius: 9px;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    font-size: 20px;
-    font-weight: 400;
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-  }
-  .add-emp-btn:active { opacity: 0.75; }
+/* ── MODALS ── */
+.modal-overlay,.pay-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+  z-index:500;align-items:flex-end;justify-content:center;
+}
+.modal-overlay.open,.pay-modal-overlay.open{display:flex}
+.modal,.pay-modal{
+  background:var(--surface);border-radius:20px 20px 0 0;
+  padding:22px 18px 38px;width:100%;max-width:480px;
+  animation:slideUp 0.22s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal h3,.pay-modal h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:14px}
+.modal-input,.pay-modal-input{
+  width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:15px;font-weight:600;
+  padding:9px 12px;outline:none;margin-bottom:12px;
+}
+.modal-input:focus,.pay-modal-input:focus{border-color:var(--accent)}
+.modal-btns{display:flex;gap:9px}
+.modal-cancel{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--muted);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:10px;cursor:pointer}
+.modal-confirm{flex:2;background:var(--accent);border:none;border-radius:9px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:10px;cursor:pointer}
+.modal-confirm:active{opacity:0.85}
+.pay-modal-row{display:flex;gap:9px;margin-bottom:12px}
+.pay-modal-field{flex:1}
+.pay-modal-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;display:block}
 
-  .del-emp-btn {
-    background: var(--red-bg);
-    border: 1.5px solid var(--red-border);
-    border-radius: 9px;
-    color: var(--red);
-    font-family: 'Inter', sans-serif;
-    font-size: 16px;
-    font-weight: 700;
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: opacity 0.15s;
-  }
-  .del-emp-btn:active { opacity: 0.7; }
+/* ── PIN MODALS ── */
+.pin-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);
+  z-index:700;align-items:center;justify-content:center;padding:20px;
+}
+.pin-modal-overlay.open{display:flex}
+.pin-modal{
+  background:var(--surface);border-radius:20px;padding:24px 20px 20px;
+  width:100%;max-width:320px;box-shadow:0 8px 40px rgba(0,0,0,0.18);
+  animation:popIn 0.2s ease;
+}
+@keyframes popIn{from{transform:scale(0.9);opacity:0}to{transform:scale(1);opacity:1}}
+.pin-modal h3{font-size:16px;font-weight:700;color:var(--text);text-align:center;margin-bottom:3px}
+.pin-sub{font-size:11px;color:var(--muted);text-align:center;margin-bottom:16px;font-weight:500}
+.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:18px}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:transparent;transition:background 0.15s}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent)}
+.pin-dot.error{background:var(--red);border-color:var(--red)}
+.pin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.pin-key{
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;
+  font-family:'Inter',sans-serif;font-size:20px;font-weight:700;color:var(--text);
+  padding:13px 0;text-align:center;cursor:pointer;user-select:none;-webkit-user-select:none;
+  transition:background 0.1s,transform 0.1s;
+}
+.pin-key:active{background:var(--border);transform:scale(0.92)}
+.pin-key.del{font-size:17px;color:var(--muted)}
+.pin-key.empty{background:transparent;border-color:transparent;pointer-events:none}
+.pin-cancel-btn{width:100%;background:none;border:1.5px solid var(--border);border-radius:9px;color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px;cursor:pointer;margin-top:3px}
+.pin-error-msg{font-size:11px;color:var(--red);text-align:center;font-weight:600;min-height:15px;margin-bottom:5px}
 
-  /* ── ADD EMPLOYEE MODAL ── */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 500;
-    align-items: flex-end;
-    justify-content: center;
-  }
-  .modal-overlay.open { display: flex; }
+/* ── CONFIRM MODAL (replaces confirm()) ── */
+.confirm-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);
+  z-index:800;align-items:center;justify-content:center;padding:24px;
+}
+.confirm-overlay.open{display:flex}
+.confirm-box{
+  background:var(--surface);border-radius:16px;padding:22px 20px 18px;
+  width:100%;max-width:320px;box-shadow:0 6px 30px rgba(0,0,0,0.15);
+  animation:popIn 0.18s ease;text-align:center;
+}
+.confirm-box h4{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+.confirm-box p{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+.confirm-btns{display:flex;gap:9px}
+.confirm-cancel{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--muted);font-family:'Inter',sans-serif;font-size:14px;font-weight:600;padding:10px;cursor:pointer}
+.confirm-ok{flex:1;background:var(--red);border:none;border-radius:9px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:10px;cursor:pointer}
+.confirm-ok:active{opacity:0.85}
 
-  .modal {
-    background: var(--surface);
-    border-radius: 20px 20px 0 0;
-    padding: 24px 20px 40px;
-    width: 100%;
-    max-width: 480px;
-    animation: slideUp 0.22s ease;
-  }
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to   { transform: translateY(0); }
-  }
-
-  .modal h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 16px;
-    letter-spacing: -0.2px;
-  }
-
-  .modal-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    padding: 10px 14px;
-    outline: none;
-    margin-bottom: 14px;
-    transition: border-color 0.18s;
-  }
-  .modal-input:focus { border-color: var(--accent); }
-
-  .modal-btns {
-    display: flex;
-    gap: 10px;
-  }
-
-  .modal-cancel {
-    flex: 1;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    color: var(--muted);
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px;
-    cursor: pointer;
-  }
-
-  .modal-confirm {
-    flex: 2;
-    background: var(--accent);
-    border: none;
-    border-radius: 10px;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 10px;
-    cursor: pointer;
-  }
-  .modal-confirm:active { opacity: 0.85; }
-
-  /* ── MONTH NAV + RATE ── */
-  .header-mid {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 10px;
-  }
-
-  .month-nav {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .nav-btn {
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    color: var(--text2);
-    width: 30px; height: 30px;
-    border-radius: 8px;
-    font-size: 17px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.12s;
-    line-height: 1;
-  }
-  .nav-btn:active { background: var(--border); }
-
-  .month-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--accent);
-    min-width: 110px;
-    text-align: center;
-    letter-spacing: 0.1px;
-  }
-
-  .rate-wrap {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .rate-wrap label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-  }
-
-  .rate-input {
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    padding: 5px 8px;
-    width: 82px;
-    outline: none;
-    transition: border-color 0.18s;
-  }
-  .rate-input:focus { border-color: var(--accent); }
-
-  .reset-btn {
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 7px;
-    color: var(--muted);
-    font-family: 'Inter', sans-serif;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 5px 9px;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: color 0.15s, border-color 0.15s;
-  }
-  .reset-btn:active { color: var(--red); border-color: var(--red); }
-
-  /* ── STATS BAR ── */
-  .stats-bar {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-bottom: 7px;
-  }
-
-  .stat-card {
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 7px 4px;
-    text-align: center;
-  }
-
-  .stat-val {
-    font-size: 21px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.5px;
-  }
-  .stat-val.green  { color: var(--green); }
-  .stat-val.yellow { color: var(--yellow); }
-  .stat-val.red    { color: var(--red); }
-  .stat-val.grey   { color: var(--grey); }
-
-  .stat-lbl {
-    font-size: 9px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-top: 2px;
-  }
-
-  /* ── TOTALS ROW ── */
-  .totals-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 6px;
-  }
-
-  .total-pill {
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    padding: 7px 5px;
-    text-align: center;
-  }
-
-  .total-pill .t-label {
-    font-size: 9px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .total-pill .t-val {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    margin-top: 2px;
-    letter-spacing: -0.3px;
-  }
-
-  .total-pill.highlight {
-    border-color: #92b4f5;
-    background: #eaf0ff;
-  }
-  .total-pill.highlight .t-val { color: var(--accent); }
-
-  /* ── LEGEND ── */
-  .legend {
-    display: flex;
-    gap: 14px;
-    padding: 8px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .legend::-webkit-scrollbar { display: none; }
-
-  .leg-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--text2);
-  }
-
-  .leg-dot {
-    width: 10px; height: 10px;
-    border-radius: 3px;
-    flex-shrink: 0;
-  }
-
-  /* ── CALENDAR ── */
-  .calendar-wrap { padding: 12px 11px 40px; }
-
-  .day-headers {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 5px;
-  }
-
-  .day-hdr {
-    text-align: center;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    padding: 3px 0;
-  }
-  .day-hdr.sun { color: var(--red); }
-  .day-hdr.sat { color: var(--accent); }
-
-  .cal-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-  }
-
-  .day-cell {
-    aspect-ratio: 1;
-    border-radius: 10px;
-    border: 1.5px solid var(--border);
-    background: var(--surface);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    user-select: none;
-    transition: transform 0.1s, border-color 0.15s, background 0.15s;
-    -webkit-user-select: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  }
-  .day-cell:active { transform: scale(0.85); }
-
-  .day-cell.empty {
-    background: transparent;
-    border-color: transparent;
-    pointer-events: none;
-    box-shadow: none;
-  }
-
-  .day-cell .d-num {
-    font-size: 18px;
-    font-weight: 600;
-    line-height: 1;
-    color: var(--text);
-    letter-spacing: -0.4px;
-  }
-  .day-cell .d-day {
-    font-size: 8px;
-    font-weight: 600;
-    color: var(--muted);
-    margin-top: 2px;
-    letter-spacing: 0.4px;
-    text-transform: uppercase;
-  }
-  .day-cell .d-icon {
-    font-size: 9px;
-    font-weight: 700;
-    margin-top: 1px;
-    line-height: 1;
-    color: var(--muted);
-  }
-
-  .day-cell.state-1 { background: var(--green-bg); border-color: var(--green-border); }
-  .day-cell.state-1 .d-num  { color: var(--green-num); }
-  .day-cell.state-1 .d-day  { color: var(--green); }
-  .day-cell.state-1 .d-icon { color: var(--green); }
-
-  .day-cell.state-2 { background: var(--yellow-bg); border-color: var(--yellow-border); }
-  .day-cell.state-2 .d-num  { color: var(--yellow-num); }
-  .day-cell.state-2 .d-day  { color: var(--yellow); }
-  .day-cell.state-2 .d-icon { color: var(--yellow); }
-
-  .day-cell.state-3 { background: var(--red-bg); border-color: var(--red-border); }
-  .day-cell.state-3 .d-num  { color: var(--red-num); }
-  .day-cell.state-3 .d-day  { color: var(--red); }
-  .day-cell.state-3 .d-icon { color: var(--red); }
-
-  .day-cell.state-4 { background: var(--grey-bg); border-color: var(--grey-border); }
-  .day-cell.state-4 .d-num  { color: var(--grey-num); }
-  .day-cell.state-4 .d-day  { color: var(--grey); }
-  .day-cell.state-4 .d-icon { color: var(--grey); }
-
-  .day-cell.today-cell { box-shadow: 0 0 0 2px var(--accent), 0 1px 3px rgba(0,0,0,0.06); }
-  .day-cell.is-sun.state-0 .d-num { color: var(--red); opacity: 0.6; }
-  .day-cell.is-sat.state-0 .d-num { color: var(--accent); opacity: 0.6; }
-
-
-  /* ── PAYMENT SECTION ── */
-  .payment-wrap {
-    margin: 0 11px 32px;
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-  }
-  .payment-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 11px 14px 10px;
-    border-bottom: 1.5px solid var(--border);
-    background: var(--surface2);
-  }
-  .payment-title {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--text2);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-  }
-  .add-payment-btn {
-    background: var(--accent);
-    border: none;
-    border-radius: 7px;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 5px 12px;
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-  .add-payment-btn:active { opacity: 0.75; }
-  .balance-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    border-bottom: 1.5px solid var(--border);
-  }
-  .bal-cell {
-    padding: 9px 6px;
-    text-align: center;
-    border-right: 1px solid var(--border);
-  }
-  .bal-cell:last-child { border-right: none; }
-  .bal-label {
-    font-size: 9px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-  .bal-val {
-    font-size: 14px;
-    font-weight: 700;
-    margin-top: 2px;
-    letter-spacing: -0.3px;
-  }
-  .bal-val.earned { color: var(--accent); }
-  .bal-val.paid   { color: var(--green); }
-  .bal-val.due    { color: var(--red); }
-  .bal-val.zero   { color: var(--muted); }
-  .payment-empty {
-    padding: 16px;
-    text-align: center;
-    font-size: 12px;
-    color: var(--muted);
-    font-style: italic;
-  }
-  .payment-item {
-    display: flex;
-    align-items: center;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    gap: 10px;
-  }
-  .payment-item:last-child { border-bottom: none; }
-  .pay-icon {
-    width: 32px; height: 32px;
-    border-radius: 8px;
-    background: var(--green-bg);
-    border: 1.5px solid var(--green-border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 15px;
-    flex-shrink: 0;
-  }
-  .pay-info { flex: 1; min-width: 0; }
-  .pay-amount {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--green-num);
-    letter-spacing: -0.3px;
-  }
-  .pay-date {
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--muted);
-    margin-top: 1px;
-  }
-  .pay-del {
-    background: none;
-    border: none;
-    color: var(--muted);
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px 6px;
-    border-radius: 6px;
-    line-height: 1;
-    transition: color 0.15s, background 0.15s;
-    flex-shrink: 0;
-  }
-  .pay-del:active { color: var(--red); background: var(--red-bg); }
-  .pay-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 600;
-    align-items: flex-end;
-    justify-content: center;
-  }
-  .pay-modal-overlay.open { display: flex; }
-  .pay-modal {
-    background: var(--surface);
-    border-radius: 20px 20px 0 0;
-    padding: 24px 20px 40px;
-    width: 100%;
-    max-width: 480px;
-    animation: slideUp 0.22s ease;
-  }
-  .pay-modal h3 {
-    font-size: 16px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 16px;
-  }
-  .pay-modal-row { display: flex; gap: 10px; margin-bottom: 14px; }
-  .pay-modal-field { flex: 1; }
-  .pay-modal-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 5px;
-    display: block;
-  }
-  .pay-modal-input {
-    width: 100%;
-    background: var(--surface2);
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    color: var(--text);
-    font-family: 'Inter', sans-serif;
-    font-size: 15px;
-    font-weight: 600;
-    padding: 9px 12px;
-    outline: none;
-    transition: border-color 0.18s;
-  }
-  .pay-modal-input:focus { border-color: var(--accent); }
-
-  /* ── TOAST ── */
-  .toast {
-    position: fixed;
-    bottom: 36px;
-    left: 50%;
-    transform: translateX(-50%) translateY(16px);
-    background: var(--text);
-    border-radius: 20px;
-    padding: 8px 18px;
-    font-size: 12px;
-    font-weight: 500;
-    color: #fff;
-    opacity: 0;
-    transition: opacity 0.18s, transform 0.18s;
-    pointer-events: none;
-    white-space: nowrap;
-    z-index: 999;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
+  background:var(--text);border-radius:18px;padding:7px 16px;
+  font-size:12px;font-weight:500;color:#fff;opacity:0;
+  transition:opacity 0.18s,transform 0.18s;pointer-events:none;
+  white-space:nowrap;z-index:999;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 
-<!-- ADD EMPLOYEE MODAL -->
+<!-- ── CONFIRM MODAL ── -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h4 id="confirmTitle">Are you sure?</h4>
+    <p id="confirmMsg"></p>
+    <div class="confirm-btns">
+      <button class="confirm-cancel" onclick="confirmResolve(false)">Cancel</button>
+      <button class="confirm-ok" id="confirmOkBtn" onclick="confirmResolve(true)">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── PIN SETUP MODAL ── -->
+<div class="pin-modal-overlay" id="pinSetupOverlay">
+  <div class="pin-modal">
+    <h3>🔐 Set Admin PIN</h3>
+    <div class="pin-sub" id="pinSetupSub">Create a 4-digit PIN to protect edits</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="sd0"></div><div class="pin-dot" id="sd1"></div>
+      <div class="pin-dot" id="sd2"></div><div class="pin-dot" id="sd3"></div>
+    </div>
+    <div class="pin-error-msg" id="pinSetupErr"></div>
+    <div class="pin-grid" id="pinSetupGrid"></div>
+    <button class="pin-cancel-btn" onclick="closePinSetup()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── PIN VERIFY MODAL ── -->
+<div class="pin-modal-overlay" id="pinVerifyOverlay">
+  <div class="pin-modal">
+    <h3>🔒 Enter PIN to Edit</h3>
+    <div class="pin-sub">Entry locked after 2 min. Enter PIN to edit.</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="vd0"></div><div class="pin-dot" id="vd1"></div>
+      <div class="pin-dot" id="vd2"></div><div class="pin-dot" id="vd3"></div>
+    </div>
+    <div class="pin-error-msg" id="pinVerifyErr"></div>
+    <div class="pin-grid" id="pinVerifyGrid"></div>
+    <button class="pin-cancel-btn" onclick="closePinVerify()">Cancel</button>
+  </div>
+</div>
+
+<!-- ── ADD EMPLOYEE MODAL ── -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <h3>Add Employee</h3>
@@ -701,96 +324,13 @@
   </div>
 </div>
 
-<div class="header">
-  <!-- EMPLOYEE SELECTOR ROW -->
-  <div class="emp-row">
-    <div class="emp-select-wrap">
-      <select class="emp-select" id="empSelect" onchange="switchEmployee()"></select>
-      <span class="emp-select-arrow">▾</span>
-    </div>
-    <button class="add-emp-btn" onclick="openModal()" title="Add employee">+</button>
-    <button class="del-emp-btn" onclick="deleteEmployee()" title="Delete employee">✕</button>
-  </div>
-
-  <!-- MONTH NAV + RATE -->
-  <div class="header-mid">
-    <div class="month-nav">
-      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
-      <div class="month-label" id="monthLabel"></div>
-      <button class="nav-btn" onclick="changeMonth(1)">›</button>
-    </div>
-    <div class="rate-wrap">
-      <label>₹</label>
-      <input class="rate-input" id="rateInput" type="number" value="500" min="0" placeholder="Rate/day" oninput="saveCurrentRate(); updateStats()">
-      <button class="reset-btn" onclick="resetMonth()">Reset</button>
-    </div>
-  </div>
-
-  <!-- STATS -->
-  <div class="stats-bar">
-    <div class="stat-card">
-      <div class="stat-val green"  id="cntFull">0</div>
-      <div class="stat-lbl">Full Day</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val yellow" id="cntHalf">0</div>
-      <div class="stat-lbl">Half Day</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val red"    id="cntAbsent">0</div>
-      <div class="stat-lbl">Absent</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-val grey"   id="cntHoliday">0</div>
-      <div class="stat-lbl">P. Holiday</div>
-    </div>
-  </div>
-
-  <div class="totals-row">
-    <div class="total-pill">
-      <div class="t-label">Payable Days</div>
-      <div class="t-val" id="totalDays">0</div>
-    </div>
-    <div class="total-pill">
-      <div class="t-label">Days in Month</div>
-      <div class="t-val" id="totalMonthDays">0</div>
-    </div>
-    <div class="total-pill highlight">
-      <div class="t-label">Total Amount</div>
-      <div class="t-val" id="totalAmount">₹0</div>
-    </div>
-  </div>
-</div>
-
-<div class="legend">
-  <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Full Day</div>
-  <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Half Day</div>
-  <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Absent</div>
-  <div class="leg-item"><div class="leg-dot" style="background:var(--grey)"></div>Paid Holiday</div>
-  <div class="leg-item"><div class="leg-dot" style="background:var(--surface);border:1.5px solid var(--border)"></div>Unmarked</div>
-</div>
-
-<div class="calendar-wrap">
-  <div class="day-headers">
-    <div class="day-hdr sun">Su</div>
-    <div class="day-hdr">Mo</div>
-    <div class="day-hdr">Tu</div>
-    <div class="day-hdr">We</div>
-    <div class="day-hdr">Th</div>
-    <div class="day-hdr">Fr</div>
-    <div class="day-hdr sat">Sa</div>
-  </div>
-  <div class="cal-grid" id="calGrid"></div>
-</div>
-
-
-<!-- ADD PAYMENT MODAL -->
+<!-- ── ADD PAYMENT MODAL ── -->
 <div class="pay-modal-overlay" id="payModalOverlay">
   <div class="pay-modal">
     <h3>Record Payment</h3>
     <div class="pay-modal-row">
       <div class="pay-modal-field">
-        <label class="pay-modal-label">Amount Paid ₹</label>
+        <label class="pay-modal-label">Amount ₹</label>
         <input class="pay-modal-input" id="payAmtInput" type="number" min="0" placeholder="0"
           onkeydown="if(event.key==='Enter')confirmPayment()">
       </div>
@@ -801,393 +341,370 @@
     </div>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closePayModal()">Cancel</button>
-      <button class="modal-confirm" onclick="confirmPayment()">Save Payment</button>
+      <button class="modal-confirm" onclick="confirmPayment()">Save</button>
     </div>
   </div>
 </div>
 
-<!-- PAYMENT SECTION -->
-<div class="payment-wrap" id="paymentWrap">
-  <div class="payment-header">
-    <span class="payment-title">💳 Payments</span>
-    <button class="add-payment-btn" onclick="openPayModal()">+ Add Payment</button>
+<!-- ── HEADER ── -->
+<div class="header">
+  <div class="emp-row">
+    <div class="emp-select-wrap">
+      <select class="emp-select" id="empSelect" onchange="switchEmployee()"></select>
+      <span class="emp-select-arrow">▾</span>
+    </div>
+    <button class="icon-btn add-btn" onclick="openModal()">+</button>
+    <button class="icon-btn del-btn" onclick="deleteEmployee()">✕</button>
   </div>
-  <div class="balance-bar">
-    <div class="bal-cell">
-      <div class="bal-label">Earned</div>
-      <div class="bal-val earned" id="balEarned">₹0</div>
+
+  <div class="mid-row">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button class="nav-btn" onclick="changeMonth(1)">›</button>
     </div>
-    <div class="bal-cell">
-      <div class="bal-label">Paid</div>
-      <div class="bal-val paid" id="balPaid">₹0</div>
-    </div>
-    <div class="bal-cell">
-      <div class="bal-label">Balance Due</div>
-      <div class="bal-val due" id="balDue">₹0</div>
+    <div class="rate-wrap">
+      <label>₹/day</label>
+      <input class="rate-input" id="rateInput" type="number" value="500" min="0" oninput="saveCurrentRate();updateStats()">
     </div>
   </div>
-  <div id="paymentList"></div>
+
+  <div class="action-row">
+    <button class="action-btn reset-action" id="resetBtn">🗑 Reset Month</button>
+    <button class="action-btn pin-action" id="pinBtn">🔐 Set PIN</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-val green" id="cntFull">0</div><div class="stat-lbl">Full</div></div>
+    <div class="stat-card"><div class="stat-val yellow" id="cntHalf">0</div><div class="stat-lbl">Half</div></div>
+    <div class="stat-card"><div class="stat-val red" id="cntAbsent">0</div><div class="stat-lbl">Absent</div></div>
+    <div class="stat-card"><div class="stat-val grey" id="cntHoliday">0</div><div class="stat-lbl">Holiday</div></div>
+  </div>
+
+  <div class="totals-row">
+    <div class="total-pill"><div class="t-label">Payable Days</div><div class="t-val" id="totalDays">0</div></div>
+    <div class="total-pill"><div class="t-label">Month Days</div><div class="t-val" id="totalMonthDays">0</div></div>
+    <div class="total-pill highlight"><div class="t-label">Total Amount</div><div class="t-val" id="totalAmount">₹0</div></div>
+  </div>
+</div>
+
+<!-- ── SCROLLABLE BODY ── -->
+<div class="scroll-body">
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Full Day</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Half Day</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Absent</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--grey)"></div>Holiday</div>
+    <div class="leg-item"><div class="leg-dot" style="background:#fff;border:1.5px solid var(--border)"></div>Unmarked</div>
+  </div>
+
+  <div class="calendar-wrap">
+    <div class="day-headers">
+      <div class="day-hdr sun">Su</div><div class="day-hdr">Mo</div><div class="day-hdr">Tu</div>
+      <div class="day-hdr">We</div><div class="day-hdr">Th</div><div class="day-hdr">Fr</div>
+      <div class="day-hdr sat">Sa</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <div class="payment-wrap">
+    <div class="payment-header">
+      <span class="payment-title">💳 Payments</span>
+      <button class="add-payment-btn" onclick="openPayModal()">+ Add</button>
+    </div>
+    <div class="balance-bar">
+      <div class="bal-cell"><div class="bal-label">Earned</div><div class="bal-val earned" id="balEarned">₹0</div></div>
+      <div class="bal-cell"><div class="bal-label">Paid</div><div class="bal-val paid" id="balPaid">₹0</div></div>
+      <div class="bal-cell"><div class="bal-label">Balance</div><div class="bal-val due" id="balDue">₹0</div></div>
+    </div>
+    <div id="paymentList"></div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  const DAYS_SHORT   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const MONTHS       = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const STATE_ICONS  = ['','✓','½','✗','★'];
-  const STATE_LABELS = ['Unmarked','Full Day Present','Half Day Present','Absent','Paid Holiday'];
-  const META_KEY     = 'att_meta_v3';
-  const MAX_EMP      = 10;
+const DAYS   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const ICONS  = ['','✓','½','✗','★'];
+const LABELS = ['Unmarked','Full Day Present','Half Day Present','Absent','Paid Holiday'];
+const META_KEY = 'att_meta_v3';
+const PIN_KEY  = 'att_admin_pin';
+const LOCK_MS  = 2 * 60 * 1000;
+const MAX_EMP  = 10;
 
-  let today      = new Date();
-  let viewYear   = today.getFullYear();
-  let viewMonth  = today.getMonth();
-  let currentEmpId = null;
+let today = new Date(), viewYear = today.getFullYear(), viewMonth = today.getMonth(), currentEmpId = null;
 
-  /* ── EMPLOYEE STORE ──
-     meta = { employees: [{id, name, rate}], lastEmpId }
-     attendance per employee per month: att_<empId>_<year>_<month>
-  */
-  function loadMeta() {
-    try { return JSON.parse(localStorage.getItem(META_KEY)) || {employees:[], lastEmpId:0}; }
-    catch(e) { return {employees:[], lastEmpId:0}; }
+/* ── CUSTOM CONFIRM (replaces native confirm() which is blocked on iOS PWA) ── */
+let confirmResolve = ()=>{};
+function showConfirm(title, msg, okLabel='Confirm', danger=true){
+  return new Promise(res => {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmMsg').textContent   = msg;
+    const okBtn = document.getElementById('confirmOkBtn');
+    okBtn.textContent = okLabel;
+    okBtn.style.background = danger ? 'var(--red)' : 'var(--accent)';
+    confirmResolve = (val) => {
+      document.getElementById('confirmOverlay').classList.remove('open');
+      res(val);
+    };
+    document.getElementById('confirmOverlay').classList.add('open');
+  });
+}
+
+/* ── META / ATTENDANCE / PAYMENTS ── */
+function loadMeta(){ try{ return JSON.parse(localStorage.getItem(META_KEY))||{employees:[],lastEmpId:0}; }catch(e){return{employees:[],lastEmpId:0};} }
+function saveMeta(m){ localStorage.setItem(META_KEY, JSON.stringify(m)); }
+function attKey(id,y,m){ return 'att_'+id+'_'+y+'_'+m; }
+function loadAtt(id){ try{ return JSON.parse(localStorage.getItem(attKey(id,viewYear,viewMonth)))||{}; }catch(e){return{};} }
+function saveAtt(id,d){ localStorage.setItem(attKey(id,viewYear,viewMonth), JSON.stringify(d)); }
+function payKey(id,y,m){ return 'pay_'+id+'_'+y+'_'+m; }
+function loadPay(id){ try{ return JSON.parse(localStorage.getItem(payKey(id,viewYear,viewMonth)))||[]; }catch(e){return[];} }
+function savePay(id,d){ localStorage.setItem(payKey(id,viewYear,viewMonth), JSON.stringify(d)); }
+
+/* ── LOCK/STAMP ── */
+function stampKey(id,y,m,d){ return 'stamp_'+id+'_'+y+'_'+m+'_'+d; }
+function getStamp(id,d){ const v=localStorage.getItem(stampKey(id,viewYear,viewMonth,d)); return v?parseInt(v):null; }
+function setStamp(id,d){ if(!getStamp(id,d)) localStorage.setItem(stampKey(id,viewYear,viewMonth,d), Date.now()); }
+function isDayLocked(id,d){
+  if(!localStorage.getItem(PIN_KEY)) return false;
+  const att=loadAtt(id); if(!att[d]) return false;
+  const s=getStamp(id,d); if(!s) return true;
+  return (Date.now()-s)>LOCK_MS;
+}
+function hasPin(){ return !!localStorage.getItem(PIN_KEY); }
+function getPin(){ return localStorage.getItem(PIN_KEY)||''; }
+
+/* ── EMPLOYEE DROPDOWN ── */
+function populateDropdown(selId){
+  const meta=loadMeta(), sel=document.getElementById('empSelect');
+  sel.innerHTML='';
+  if(!meta.employees.length){ sel.innerHTML='<option value="">— No employees —</option>'; currentEmpId=null; return; }
+  meta.employees.forEach(e=>{ const o=document.createElement('option'); o.value=e.id; o.textContent=e.name; sel.appendChild(o); });
+  sel.value = selId || meta.employees[0].id;
+  currentEmpId = parseInt(sel.value)||null;
+}
+function switchEmployee(){ currentEmpId=parseInt(document.getElementById('empSelect').value)||null; loadCurrentRate(); buildCalendar(); }
+function loadCurrentRate(){ if(!currentEmpId) return; const m=loadMeta(), e=m.employees.find(x=>x.id===currentEmpId); document.getElementById('rateInput').value=e?(e.rate||500):500; }
+function saveCurrentRate(){ if(!currentEmpId) return; const m=loadMeta(), e=m.employees.find(x=>x.id===currentEmpId); if(e){ e.rate=parseFloat(document.getElementById('rateInput').value)||0; saveMeta(m); } }
+
+/* ── ADD EMPLOYEE ── */
+function openModal(){
+  if(loadMeta().employees.length>=MAX_EMP){ showToast('Max 10 employees'); return; }
+  document.getElementById('modalNameInput').value='';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('modalNameInput').focus(),250);
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+function confirmAddEmp(){
+  const name=document.getElementById('modalNameInput').value.trim();
+  if(!name){ document.getElementById('modalNameInput').focus(); return; }
+  const meta=loadMeta();
+  if(meta.employees.length>=MAX_EMP){ closeModal(); showToast('Max 10 employees'); return; }
+  meta.lastEmpId=(meta.lastEmpId||0)+1;
+  const emp={id:meta.lastEmpId,name,rate:500};
+  meta.employees.push(emp); saveMeta(meta); closeModal();
+  populateDropdown(emp.id); loadCurrentRate(); buildCalendar();
+  showToast(name+' added');
+}
+
+/* ── DELETE EMPLOYEE ── */
+async function deleteEmployee(){
+  if(!currentEmpId) return;
+  const meta=loadMeta(), emp=meta.employees.find(e=>e.id===currentEmpId);
+  if(!emp) return;
+  if(meta.employees.length===1){ showToast('Cannot delete last employee'); return; }
+  const ok=await showConfirm('Delete Employee','Delete "'+emp.name+'" and all their data?','Delete');
+  if(!ok) return;
+  Object.keys(localStorage).filter(k=>k.startsWith('att_'+currentEmpId+'_')||k.startsWith('pay_'+currentEmpId+'_')||k.startsWith('stamp_'+currentEmpId+'_')).forEach(k=>localStorage.removeItem(k));
+  meta.employees=meta.employees.filter(e=>e.id!==currentEmpId); saveMeta(meta);
+  populateDropdown(null); loadCurrentRate(); buildCalendar();
+  showToast(emp.name+' deleted');
+}
+
+/* ── CALENDAR ── */
+function buildCalendar(){
+  const firstDay=new Date(viewYear,viewMonth,1).getDay();
+  const dim=new Date(viewYear,viewMonth+1,0).getDate();
+  document.getElementById('monthLabel').textContent=MONTHS[viewMonth]+' '+viewYear;
+  document.getElementById('totalMonthDays').textContent=dim;
+  const grid=document.getElementById('calGrid'); grid.innerHTML='';
+  const att=currentEmpId?loadAtt(currentEmpId):{};
+  for(let i=0;i<firstDay;i++){ const e=document.createElement('div'); e.className='day-cell empty'; grid.appendChild(e); }
+  for(let d=1;d<=dim;d++){
+    const cell=document.createElement('div');
+    const dow=new Date(viewYear,viewMonth,d).getDay();
+    const isTod=(d===today.getDate()&&viewMonth===today.getMonth()&&viewYear===today.getFullYear());
+    const state=att[d]||0;
+    const locked=currentEmpId&&hasPin()&&isDayLocked(currentEmpId,d);
+    cell.className='day-cell state-'+state+(isTod?' today-cell':'')+(dow===0?' is-sun':dow===6?' is-sat':'')+(locked?' locked':'');
+    const icon=locked&&state>0?'🔒':ICONS[state];
+    cell.innerHTML='<div class="d-num">'+d+'</div><div class="d-day">'+DAYS[dow]+'</div><div class="d-icon">'+icon+'</div>';
+    if(currentEmpId) cell.addEventListener('click',()=>tapDay(d,cell));
+    grid.appendChild(cell);
   }
-  function saveMeta(m) { localStorage.setItem(META_KEY, JSON.stringify(m)); }
+  updateStats();
+}
 
-  function attKey(empId, y, m) { return `att_${empId}_${y}_${m}`; }
+function tapDay(d,cell){
+  if(hasPin()&&isDayLocked(currentEmpId,d)){ openPinVerify(()=>doTap(d)); return; }
+  doTap(d);
+}
+function doTap(d){
+  const att=loadAtt(currentEmpId), cur=att[d]||0, nxt=(cur+1)%5;
+  if(cur===0) setStamp(currentEmpId,d);
+  att[d]=nxt; saveAtt(currentEmpId,att);
+  showToast(LABELS[nxt]); buildCalendar();
+}
 
-  function loadAttendance(empId) {
-    try { return JSON.parse(localStorage.getItem(attKey(empId, viewYear, viewMonth))) || {}; }
-    catch(e) { return {}; }
-  }
-  function saveAttendance(empId, data) {
-    localStorage.setItem(attKey(empId, viewYear, viewMonth), JSON.stringify(data));
-  }
+function updateStats(){
+  const dim=new Date(viewYear,viewMonth+1,0).getDate();
+  const att=currentEmpId?loadAtt(currentEmpId):{};
+  let full=0,half=0,absent=0,hol=0;
+  for(let d=1;d<=dim;d++){ const s=att[d]||0; if(s===1)full++; else if(s===2)half++; else if(s===3)absent++; else if(s===4)hol++; }
+  document.getElementById('cntFull').textContent=full;
+  document.getElementById('cntHalf').textContent=half;
+  document.getElementById('cntAbsent').textContent=absent;
+  document.getElementById('cntHoliday').textContent=hol;
+  const payable=full+(half*0.5)+hol;
+  document.getElementById('totalDays').textContent=payable%1===0?payable:payable.toFixed(1);
+  const rate=parseFloat(document.getElementById('rateInput').value)||0;
+  document.getElementById('totalAmount').textContent='₹'+fi(payable*rate);
+  renderPayments();
+}
 
-  /* ── POPULATE DROPDOWN ── */
-  function populateDropdown(selectEmpId) {
-    const meta = loadMeta();
-    const sel  = document.getElementById('empSelect');
-    sel.innerHTML = '';
-    if (meta.employees.length === 0) {
-      const opt = document.createElement('option');
-      opt.value = ''; opt.textContent = '— No employees —';
-      sel.appendChild(opt);
-      currentEmpId = null;
-      return;
-    }
-    meta.employees.forEach(emp => {
-      const opt = document.createElement('option');
-      opt.value = emp.id;
-      opt.textContent = emp.name;
-      sel.appendChild(opt);
-    });
-    const target = selectEmpId || meta.employees[0].id;
-    sel.value = target;
-    currentEmpId = parseInt(sel.value) || null;
-  }
+function fi(n){ if(n===0)return'0'; const s=Math.round(n).toString(); if(s.length<=3)return s; const l=s.slice(-3),r=s.slice(0,-3); return r.replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+l; }
+function changeMonth(d){ viewMonth+=d; if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;} buildCalendar(); }
 
-  function switchEmployee() {
-    const sel = document.getElementById('empSelect');
-    currentEmpId = parseInt(sel.value) || null;
-    loadCurrentRate();
-    buildCalendar();
-  }
+async function resetMonth(){
+  if(!currentEmpId){ showToast('No employee selected'); return; }
+  const meta=loadMeta(), emp=meta.employees.find(e=>e.id===currentEmpId);
+  const ok=await showConfirm('Reset Month','Clear all attendance for '+(emp?emp.name:'employee')+' — '+MONTHS[viewMonth]+' '+viewYear+'?','Reset');
+  if(!ok) return;
+  saveAtt(currentEmpId,{});
+  // clear stamps for this month
+  Object.keys(localStorage).filter(k=>k.startsWith('stamp_'+currentEmpId+'_'+viewYear+'_'+viewMonth+'_')).forEach(k=>localStorage.removeItem(k));
+  buildCalendar(); showToast('Month reset');
+}
 
-  /* ── RATE PER EMPLOYEE ── */
-  function loadCurrentRate() {
-    if (!currentEmpId) return;
-    const meta = loadMeta();
-    const emp  = meta.employees.find(e => e.id === currentEmpId);
-    document.getElementById('rateInput').value = emp ? (emp.rate || 500) : 500;
-  }
+/* ── PAYMENTS ── */
+function openPayModal(){
+  if(!currentEmpId){ showToast('No employee selected'); return; }
+  document.getElementById('payAmtInput').value='';
+  document.getElementById('payDateInput').value=new Date().toISOString().slice(0,10);
+  document.getElementById('payModalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('payAmtInput').focus(),250);
+}
+function closePayModal(){ document.getElementById('payModalOverlay').classList.remove('open'); }
+function confirmPayment(){
+  const amt=parseFloat(document.getElementById('payAmtInput').value);
+  const dt=document.getElementById('payDateInput').value;
+  if(!amt||amt<=0){ document.getElementById('payAmtInput').focus(); return; }
+  if(!dt){ document.getElementById('payDateInput').focus(); return; }
+  const pays=loadPay(currentEmpId);
+  pays.push({id:Date.now(),amount:amt,date:dt});
+  pays.sort((a,b)=>a.date.localeCompare(b.date));
+  savePay(currentEmpId,pays); closePayModal(); renderPayments(); showToast('Payment saved');
+}
+async function deletePayment(pid){
+  const ok=await showConfirm('Delete Payment','Remove this payment entry?','Delete');
+  if(!ok) return;
+  savePay(currentEmpId,loadPay(currentEmpId).filter(p=>p.id!==pid)); renderPayments(); showToast('Payment deleted');
+}
+function fmtDate(iso){ const [y,m,d]=iso.split('-'); return parseInt(d)+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][parseInt(m)-1]+' '+y; }
+function renderPayments(){
+  if(!currentEmpId){ document.getElementById('paymentList').innerHTML='<div class="payment-empty">Select an employee</div>'; renderBalance(0,0); return; }
+  const pays=loadPay(currentEmpId), list=document.getElementById('paymentList');
+  list.innerHTML=pays.length===0?'<div class="payment-empty">No payments yet</div>':pays.map(p=>'<div class="payment-item"><div class="pay-icon">💵</div><div class="pay-info"><div class="pay-amount">₹'+fi(p.amount)+'</div><div class="pay-date">'+fmtDate(p.date)+'</div></div><button class="pay-del" onclick="deletePayment('+p.id+')">✕</button></div>').join('');
+  const dim=new Date(viewYear,viewMonth+1,0).getDate(), att=loadAtt(currentEmpId);
+  let full=0,half=0,hol=0;
+  for(let d=1;d<=dim;d++){ const s=att[d]||0; if(s===1)full++; else if(s===2)half++; else if(s===4)hol++; }
+  const rate=parseFloat(document.getElementById('rateInput').value)||0;
+  renderBalance((full+(half*0.5)+hol)*rate, pays.reduce((s,p)=>s+p.amount,0));
+}
+function renderBalance(earned,paid){
+  const due=earned-paid;
+  document.getElementById('balEarned').textContent='₹'+fi(earned);
+  document.getElementById('balPaid').textContent='₹'+fi(paid);
+  const el=document.getElementById('balDue');
+  el.textContent='₹'+fi(Math.max(0,due));
+  el.className='bal-val '+(due<=0?'zero':'due');
+}
 
-  function saveCurrentRate() {
-    if (!currentEmpId) return;
-    const meta = loadMeta();
-    const emp  = meta.employees.find(e => e.id === currentEmpId);
-    if (emp) {
-      emp.rate = parseFloat(document.getElementById('rateInput').value) || 0;
-      saveMeta(meta);
-    }
-  }
-
-  /* ── ADD EMPLOYEE ── */
-  function openModal() {
-    const meta = loadMeta();
-    if (meta.employees.length >= MAX_EMP) {
-      showToast('Maximum 10 employees reached');
-      return;
-    }
-    document.getElementById('modalNameInput').value = '';
-    document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('modalNameInput').focus(), 250);
-  }
-
-  function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('open');
-  }
-
-  function confirmAddEmp() {
-    const name = document.getElementById('modalNameInput').value.trim();
-    if (!name) { document.getElementById('modalNameInput').focus(); return; }
-    const meta = loadMeta();
-    if (meta.employees.length >= MAX_EMP) { closeModal(); showToast('Maximum 10 employees reached'); return; }
-    meta.lastEmpId = (meta.lastEmpId || 0) + 1;
-    const newEmp = { id: meta.lastEmpId, name, rate: 500 };
-    meta.employees.push(newEmp);
-    saveMeta(meta);
-    closeModal();
-    populateDropdown(newEmp.id);
-    loadCurrentRate();
-    buildCalendar();
-    showToast(`${name} added`);
-  }
-
-  /* ── DELETE EMPLOYEE ── */
-  function deleteEmployee() {
-    if (!currentEmpId) return;
-    const meta = loadMeta();
-    const emp  = meta.employees.find(e => e.id === currentEmpId);
-    if (!emp) return;
-    if (meta.employees.length === 1) {
-      showToast('Cannot delete last employee');
-      return;
-    }
-    if (!confirm(`Delete "${emp.name}" and all their attendance data?`)) return;
-    // remove all attendance keys for this employee
-    Object.keys(localStorage).filter(k => k.startsWith(`att_${currentEmpId}_`)).forEach(k => localStorage.removeItem(k));
-    meta.employees = meta.employees.filter(e => e.id !== currentEmpId);
-    saveMeta(meta);
-    populateDropdown(null);
-    loadCurrentRate();
-    buildCalendar();
-    showToast(`${emp.name} deleted`);
-  }
-
-  /* ── CALENDAR ── */
-  function buildCalendar() {
-    const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
-    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
-    document.getElementById('monthLabel').textContent = `${MONTHS[viewMonth]} ${viewYear}`;
-    document.getElementById('totalMonthDays').textContent = daysInMonth;
-
-    const grid = document.getElementById('calGrid');
-    grid.innerHTML = '';
-
-    const attendance = currentEmpId ? loadAttendance(currentEmpId) : {};
-
-    for (let i=0; i<firstDay; i++) {
-      const e = document.createElement('div');
-      e.className = 'day-cell empty';
-      grid.appendChild(e);
-    }
-
-    for (let d=1; d<=daysInMonth; d++) {
-      const cell  = document.createElement('div');
-      const dow   = new Date(viewYear, viewMonth, d).getDay();
-      const isTod = (d===today.getDate() && viewMonth===today.getMonth() && viewYear===today.getFullYear());
-      const state = attendance[d] || 0;
-
-      cell.className = `day-cell state-${state}${isTod?' today-cell':''}${dow===0?' is-sun':dow===6?' is-sat':''}`;
-      cell.innerHTML = `<div class="d-num">${d}</div><div class="d-day">${DAYS_SHORT[dow]}</div><div class="d-icon">${STATE_ICONS[state]}</div>`;
-      if (currentEmpId) cell.addEventListener('click', () => tapDay(d, cell));
-      else cell.style.cursor = 'default';
-      grid.appendChild(cell);
-    }
-    updateStats();
-  }
-
-  function tapDay(d, cell) {
-    const att = loadAttendance(currentEmpId);
-    const cur = att[d] || 0;
-    const nxt = (cur+1) % 5;
-    att[d] = nxt;
-    saveAttendance(currentEmpId, att);
-    cell.className = cell.className.replace(/state-\d/, `state-${nxt}`);
-    cell.querySelector('.d-icon').textContent = STATE_ICONS[nxt];
-    updateStats();
-    showToast(STATE_LABELS[nxt]);
-  }
-
-  function updateStats() {
-    const dim = new Date(viewYear, viewMonth+1, 0).getDate();
-    const att = currentEmpId ? loadAttendance(currentEmpId) : {};
-    let full=0, half=0, absent=0, holiday=0;
-    for (let d=1; d<=dim; d++) {
-      const s = att[d] || 0;
-      if(s===1)full++;
-      else if(s===2)half++;
-      else if(s===3)absent++;
-      else if(s===4)holiday++;
-    }
-    document.getElementById('cntFull').textContent    = full;
-    document.getElementById('cntHalf').textContent    = half;
-    document.getElementById('cntAbsent').textContent  = absent;
-    document.getElementById('cntHoliday').textContent = holiday;
-
-    const payable = full + (half*0.5) + holiday;
-    document.getElementById('totalDays').textContent  = payable%1===0 ? payable : payable.toFixed(1);
-
-    const rate  = parseFloat(document.getElementById('rateInput').value) || 0;
-    document.getElementById('totalAmount').textContent = '₹' + formatIndian(payable * rate);
-    renderPayments();
-  }
-
-  function formatIndian(n) {
-    if(n===0) return '0';
-    const str   = Math.round(n).toString();
-    if(str.length<=3) return str;
-    const last3 = str.slice(-3);
-    const rest  = str.slice(0,-3);
-    return rest.replace(/\B(?=(\d{2})+(?!\d))/g,',') + ',' + last3;
-  }
-
-  function changeMonth(dir) {
-    viewMonth += dir;
-    if(viewMonth<0){viewMonth=11;viewYear--;}
-    if(viewMonth>11){viewMonth=0;viewYear++;}
-    buildCalendar();
-  }
-
-  function resetMonth() {
-    if(!currentEmpId){ showToast('No employee selected'); return; }
-    const meta = loadMeta();
-    const emp  = meta.employees.find(e => e.id === currentEmpId);
-    if(!confirm(`Reset attendance for ${emp?.name || 'employee'} — ${MONTHS[viewMonth]} ${viewYear}?`)) return;
-    saveAttendance(currentEmpId, {});
-    buildCalendar();
-    showToast('Month reset');
-  }
-
-  let toastTimer;
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 1600);
-  }
-
-
-  /* ── PAYMENTS ── */
-  function payKey(empId, y, m){ return `pay_${empId}_${y}_${m}`; }
-
-  function loadPayments(empId){
-    try{ return JSON.parse(localStorage.getItem(payKey(empId,viewYear,viewMonth)))||[]; }
-    catch(e){ return []; }
-  }
-  function savePayments(empId, arr){
-    localStorage.setItem(payKey(empId,viewYear,viewMonth), JSON.stringify(arr));
-  }
-
-  function openPayModal(){
-    if(!currentEmpId){ showToast('No employee selected'); return; }
-    document.getElementById('payAmtInput').value='';
-    // default date = today
-    const d=new Date();
-    document.getElementById('payDateInput').value=d.toISOString().slice(0,10);
-    document.getElementById('payModalOverlay').classList.add('open');
-    setTimeout(()=>document.getElementById('payAmtInput').focus(),250);
-  }
-
-  function closePayModal(){
-    document.getElementById('payModalOverlay').classList.remove('open');
-  }
-
-  function confirmPayment(){
-    const amt=parseFloat(document.getElementById('payAmtInput').value);
-    const dt=document.getElementById('payDateInput').value;
-    if(!amt||amt<=0){ document.getElementById('payAmtInput').focus(); return; }
-    if(!dt){ document.getElementById('payDateInput').focus(); return; }
-    const payments=loadPayments(currentEmpId);
-    payments.push({id:Date.now(), amount:amt, date:dt});
-    payments.sort((a,b)=>a.date.localeCompare(b.date));
-    savePayments(currentEmpId,payments);
-    closePayModal();
-    renderPayments();
-    showToast('Payment saved');
-  }
-
-  function deletePayment(pid){
-    if(!confirm('Delete this payment?')) return;
-    const payments=loadPayments(currentEmpId).filter(p=>p.id!==pid);
-    savePayments(currentEmpId,payments);
-    renderPayments();
-    showToast('Payment deleted');
-  }
-
-  function formatDateDisplay(isoDate){
-    const [y,m,d]=isoDate.split('-');
-    const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
-  }
-
-  function renderPayments(){
-    if(!currentEmpId){ document.getElementById('paymentList').innerHTML='<div class="payment-empty">Select an employee to view payments</div>'; renderBalance(0,0); return; }
-    const payments=loadPayments(currentEmpId);
-    const list=document.getElementById('paymentList');
-    if(payments.length===0){
-      list.innerHTML='<div class="payment-empty">No payments recorded yet</div>';
+/* ── PIN KEYPAD ── */
+function buildKeypad(gridId,onDigit,onDel){
+  const grid=document.getElementById(gridId); grid.innerHTML='';
+  [1,2,3,4,5,6,7,8,9,'',0,'X'].forEach(k=>{
+    const btn=document.createElement('button');
+    btn.className='pin-key'+(k===''?' empty':k==='X'?' del':'');
+    btn.textContent=k==='X'?'⌫':k;
+    if(k!=='') btn.onclick=()=>k==='X'?onDel():onDigit(String(k));
+    grid.appendChild(btn);
+  });
+}
+let setupStep=0,setupFirst='',setupBuf='';
+function openPinSetup(){
+  setupStep=0;setupFirst='';setupBuf='';
+  document.getElementById('pinSetupSub').textContent='Create a 4-digit PIN to protect edits';
+  document.getElementById('pinSetupErr').textContent='';
+  updSetupDots(); buildKeypad('pinSetupGrid',pinSetupDigit,pinSetupDel);
+  document.getElementById('pinSetupOverlay').classList.add('open');
+}
+function closePinSetup(){ document.getElementById('pinSetupOverlay').classList.remove('open'); }
+function updSetupDots(){ for(let i=0;i<4;i++) document.getElementById('sd'+i).className='pin-dot'+(i<setupBuf.length?' filled':''); }
+function pinSetupDigit(d){
+  if(setupBuf.length>=4) return; setupBuf+=d; updSetupDots();
+  if(setupBuf.length===4) setTimeout(()=>{
+    if(setupStep===0){ setupFirst=setupBuf;setupBuf='';setupStep=1;
+      document.getElementById('pinSetupSub').textContent='Confirm your 4-digit PIN';
+      document.getElementById('pinSetupErr').textContent=''; updSetupDots();
     } else {
-      list.innerHTML=payments.map(p=>`
-        <div class="payment-item">
-          <div class="pay-icon">💵</div>
-          <div class="pay-info">
-            <div class="pay-amount">₹${formatIndian(p.amount)}</div>
-            <div class="pay-date">${formatDateDisplay(p.date)}</div>
-          </div>
-          <button class="pay-del" onclick="deletePayment(${p.id})">✕</button>
-        </div>
-      `).join('');
+      if(setupBuf===setupFirst){ localStorage.setItem(PIN_KEY,setupBuf); closePinSetup(); showToast('PIN set — locks after 2 min 🔐'); }
+      else {
+        document.getElementById('pinSetupErr').textContent='PINs do not match. Try again.';
+        for(let i=0;i<4;i++) document.getElementById('sd'+i).className='pin-dot error';
+        setTimeout(()=>{ setupBuf='';setupStep=0;setupFirst='';
+          document.getElementById('pinSetupSub').textContent='Create a 4-digit PIN to protect edits';
+          document.getElementById('pinSetupErr').textContent=''; updSetupDots(); },700);
+      }
     }
-    // calculate earned from current stats
-    const dim=new Date(viewYear,viewMonth+1,0).getDate();
-    const att=loadAttendance(currentEmpId);
-    let full=0,half=0,holiday=0;
-    for(let d=1;d<=dim;d++){
-      const s=att[d]||0;
-      if(s===1)full++; else if(s===2)half++; else if(s===4)holiday++;
+  },80);
+}
+function pinSetupDel(){ setupBuf=setupBuf.slice(0,-1); updSetupDots(); }
+
+let verifyBuf='',verifyCb=null;
+function openPinVerify(onSuccess){ verifyBuf='';verifyCb=onSuccess; document.getElementById('pinVerifyErr').textContent=''; updVerifyDots(); buildKeypad('pinVerifyGrid',pinVerifyDigit,pinVerifyDel); document.getElementById('pinVerifyOverlay').classList.add('open'); }
+function closePinVerify(){ document.getElementById('pinVerifyOverlay').classList.remove('open'); verifyCb=null; }
+function updVerifyDots(){ for(let i=0;i<4;i++) document.getElementById('vd'+i).className='pin-dot'+(i<verifyBuf.length?' filled':''); }
+function pinVerifyDigit(d){
+  if(verifyBuf.length>=4) return; verifyBuf+=d; updVerifyDots();
+  if(verifyBuf.length===4) setTimeout(()=>{
+    if(verifyBuf===getPin()){ closePinVerify(); if(verifyCb) verifyCb(); }
+    else {
+      document.getElementById('pinVerifyErr').textContent='Wrong PIN. Try again.';
+      for(let i=0;i<4;i++) document.getElementById('vd'+i).className='pin-dot error';
+      setTimeout(()=>{ verifyBuf=''; updVerifyDots(); document.getElementById('pinVerifyErr').textContent=''; },700);
     }
-    const rate=parseFloat(document.getElementById('rateInput').value)||0;
-    const earned=(full+(half*0.5)+holiday)*rate;
-    const totalPaid=payments.reduce((s,p)=>s+p.amount,0);
-    renderBalance(earned,totalPaid);
-  }
+  },80);
+}
+function pinVerifyDel(){ verifyBuf=verifyBuf.slice(0,-1); updVerifyDots(); }
 
-  function renderBalance(earned,paid){
-    const due=earned-paid;
-    document.getElementById('balEarned').textContent='₹'+formatIndian(earned);
-    document.getElementById('balPaid').textContent='₹'+formatIndian(paid);
-    const dueEl=document.getElementById('balDue');
-    dueEl.textContent='₹'+formatIndian(Math.max(0,due));
-    dueEl.className='bal-val '+(due<=0?'zero':'due');
-  }
+/* ── TOAST ── */
+let toastTimer;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1600); }
 
-  document.getElementById('payModalOverlay').addEventListener('click',function(e){
-    if(e.target===this) closePayModal();
-  });
+/* ── WIRE UP BUTTONS (no inline onclick issues) ── */
+document.getElementById('resetBtn').addEventListener('click', resetMonth);
+document.getElementById('pinBtn').addEventListener('click', openPinSetup);
+document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('modalOverlay')) closeModal(); });
+document.getElementById('payModalOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('payModalOverlay')) closePayModal(); });
 
-  /* ── INIT ── */
-  function init() {
-    const meta = loadMeta();
-    // First run: create a default employee
-    if (meta.employees.length === 0) {
-      meta.lastEmpId = 1;
-      meta.employees = [{ id:1, name:'Employee 1', rate:500 }];
-      saveMeta(meta);
-    }
-    populateDropdown(null);
-    loadCurrentRate();
-    buildCalendar();
-  }
-
-  // Close modal on overlay click
-  document.getElementById('modalOverlay').addEventListener('click', function(e){
-    if(e.target === this) closeModal();
-  });
-
-  init();
+/* ── INIT ── */
+(function init(){
+  const meta=loadMeta();
+  if(!meta.employees.length){ meta.lastEmpId=1; meta.employees=[{id:1,name:'Employee 1',rate:500}]; saveMeta(meta); }
+  populateDropdown(null); loadCurrentRate(); buildCalendar();
+})();
 </script>
 </body>
 </html>
