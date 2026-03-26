@@ -83,6 +83,8 @@ body{
 .action-btn:active{opacity:0.7}
 .reset-action{background:var(--red-bg);border-color:var(--red-border);color:var(--red-num)}
 .pin-action{background:#eaf0ff;border-color:#92b4f5;color:var(--accent)}
+.save-action{background:#f0fff4;border-color:#6ee7a0;color:#065f2c}
+.export-action{background:#fdf4ff;border-color:#d8a8f0;color:#6b21a8}
 
 /* Stats bar */
 .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
@@ -385,8 +387,10 @@ body{
   </div>
 
   <div class="action-row">
-    <button class="action-btn reset-action" id="resetBtn">🗑 Reset Month</button>
-    <button class="action-btn pin-action" id="pinBtn">🔐 Set PIN</button>
+    <button class="action-btn reset-action" id="resetBtn">🗑 Reset</button>
+    <button class="action-btn pin-action" id="pinBtn">🔐 PIN</button>
+    <button class="action-btn save-action" id="saveBtn">💾 Save</button>
+    <button class="action-btn export-action" id="exportBtn">📤 CSV</button>
   </div>
 
   <div class="stats-bar">
@@ -737,9 +741,101 @@ function pinVerifyDel(){ verifyBuf=verifyBuf.slice(0,-1); updVerifyDots(); }
 let toastTimer;
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1600); }
 
+
+/* ── SAVE (JSON backup to file) ── */
+function saveAllData(){
+  const meta = loadMeta();
+  const backup = { meta, version:1, exported: new Date().toISOString(), data:{} };
+  meta.employees.forEach(emp => {
+    backup.data[emp.id] = { employee: emp, attendance:{}, payments:{} };
+    // collect all months stored
+    Object.keys(localStorage).forEach(k => {
+      if(k.startsWith('att_'+emp.id+'_')){
+        backup.data[emp.id].attendance[k] = localStorage.getItem(k);
+      }
+      if(k.startsWith('pay_'+emp.id+'_')){
+        backup.data[emp.id].payments[k] = localStorage.getItem(k);
+      }
+    });
+  });
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'attendance_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Backup saved 💾');
+}
+
+/* ── EXPORT CSV ── */
+function exportCSV(){
+  const meta = loadMeta();
+  const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const STATUS = ['','Present','Half Day','Absent','Paid Holiday'];
+  const dim = new Date(viewYear, viewMonth+1, 0).getDate();
+  const rows = [];
+
+  // Header row
+  const header = ['Employee','Rate/Day','Date','Day','Status','Amount Earned','Total Paid','Balance'];
+  rows.push(header);
+
+  meta.employees.forEach(emp => {
+    const att = JSON.parse(localStorage.getItem(attKey(emp.id, viewYear, viewMonth))||'{}');
+    const pays = JSON.parse(localStorage.getItem(payKey(emp.id, viewYear, viewMonth))||'[]');
+    const rate = emp.rate || 0;
+
+    let full=0, half=0, hol=0;
+    for(let d=1;d<=dim;d++){
+      const s=att[d]||0;
+      if(s===1)full++; else if(s===2)half++; else if(s===4)hol++;
+    }
+    const payable = full + half*0.5 + hol;
+    const earned  = payable * rate;
+    const totalPaid = pays.reduce((s,p)=>s+p.amount, 0);
+    const balance = earned - totalPaid;
+
+    // One row per day
+    for(let d=1;d<=dim;d++){
+      const state = att[d]||0;
+      const date  = viewYear+'-'+String(viewMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      const dayName = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(viewYear,viewMonth,d).getDay()];
+      const dayEarned = state===1?rate : state===2?(rate*0.5) : state===4?rate : 0;
+      rows.push([
+        '"'+emp.name+'"',
+        rate,
+        date,
+        dayName,
+        STATUS[state]||'Unmarked',
+        dayEarned.toFixed(2),
+        d===dim ? totalPaid.toFixed(2) : '',
+        d===dim ? balance.toFixed(2) : ''
+      ]);
+    }
+
+    // Summary row
+    rows.push(['"'+emp.name+' — SUMMARY"', rate, MONTH_NAMES[viewMonth]+' '+viewYear,
+      'Days: '+payable, 'Earned: '+earned, '', totalPaid.toFixed(2), balance.toFixed(2)]);
+    rows.push([]); // blank separator
+  });
+
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'attendance_'+MONTH_NAMES[viewMonth]+'_'+viewYear+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('CSV exported 📤');
+}
+
 /* ── WIRE UP BUTTONS (no inline onclick issues) ── */
 document.getElementById('resetBtn').addEventListener('click', resetMonth);
 document.getElementById('pinBtn').addEventListener('click', openPinSetup);
+document.getElementById('saveBtn').addEventListener('click', saveAllData);
+document.getElementById('exportBtn').addEventListener('click', exportCSV);
 document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('modalOverlay')) closeModal(); });
 document.getElementById('payModalOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('payModalOverlay')) closePayModal(); });
 
