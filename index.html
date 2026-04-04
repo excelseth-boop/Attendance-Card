@@ -478,6 +478,15 @@ function showConfirm(title, msg, okLabel='Confirm', danger=true){
 function loadMeta(){ try{ return JSON.parse(localStorage.getItem(META_KEY))||{employees:[],lastEmpId:0}; }catch(e){return{employees:[],lastEmpId:0};} }
 function saveMeta(m){ localStorage.setItem(META_KEY, JSON.stringify(m)); }
 function attKey(id,y,m){ return 'att_'+id+'_'+y+'_'+m; }
+function rateKey(id,y,m){ return 'rate_'+id+'_'+y+'_'+m; }
+function loadRate(id,y,m){
+  const v=localStorage.getItem(rateKey(id,y,m));
+  if(v!==null) return parseFloat(v);
+  // fallback: employee-level rate (legacy)
+  const meta=loadMeta(), emp=meta.employees.find(e=>e.id===id);
+  return emp?(emp.rate||500):500;
+}
+function saveRate(id,y,m,rate){ localStorage.setItem(rateKey(id,y,m), rate); }
 function loadAtt(id){ try{ return JSON.parse(localStorage.getItem(attKey(id,viewYear,viewMonth)))||{}; }catch(e){return{};} }
 function saveAtt(id,d){ localStorage.setItem(attKey(id,viewYear,viewMonth), JSON.stringify(d)); }
 function payKey(id,y,m){ return 'pay_'+id+'_'+y+'_'+m; }
@@ -500,8 +509,8 @@ function populateDropdown(selId){
   currentEmpId = parseInt(sel.value)||null;
 }
 function switchEmployee(){ currentEmpId=parseInt(document.getElementById('empSelect').value)||null; loadCurrentRate(); buildCalendar(); }
-function loadCurrentRate(){ if(!currentEmpId) return; const m=loadMeta(), e=m.employees.find(x=>x.id===currentEmpId); document.getElementById('rateInput').value=e?(e.rate||500):500; }
-function saveCurrentRate(){ if(!currentEmpId) return; const m=loadMeta(), e=m.employees.find(x=>x.id===currentEmpId); if(e){ e.rate=parseFloat(document.getElementById('rateInput').value)||0; saveMeta(m); } }
+function loadCurrentRate(){ if(!currentEmpId) return; document.getElementById('rateInput').value=loadRate(currentEmpId,viewYear,viewMonth); }
+function saveCurrentRate(){ if(!currentEmpId) return; const r=parseFloat(document.getElementById('rateInput').value)||0; saveRate(currentEmpId,viewYear,viewMonth,r); }
 
 /* ── ADD EMPLOYEE ── */
 function openModal(){
@@ -586,13 +595,13 @@ function updateStats(){
   document.getElementById('cntHoliday').textContent=hol;
   const payable=full+(half*0.5)+hol;
   document.getElementById('totalDays').textContent=payable%1===0?payable:payable.toFixed(1);
-  const rate=parseFloat(document.getElementById('rateInput').value)||0;
+  const rate=currentEmpId?loadRate(currentEmpId,viewYear,viewMonth):(parseFloat(document.getElementById('rateInput').value)||0);
   document.getElementById('totalAmount').textContent='₹'+fi(payable*rate);
   renderPayments();
 }
 
 function fi(n){ if(n===0)return'0'; const s=Math.round(n).toString(); if(s.length<=3)return s; const l=s.slice(-3),r=s.slice(0,-3); return r.replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+l; }
-function changeMonth(d){ viewMonth+=d; if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;} buildCalendar(); }
+function changeMonth(d){ viewMonth+=d; if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;} loadCurrentRate(); buildCalendar(); }
 
 async function resetMonth(){
   if(!currentEmpId){ showToast('No employee selected'); return; }
@@ -637,7 +646,7 @@ function renderPayments(){
   const dim=new Date(viewYear,viewMonth+1,0).getDate(), att=loadAtt(currentEmpId);
   let full=0,half=0,hol=0;
   for(let d=1;d<=dim;d++){ const s=att[d]||0; if(s===1)full++; else if(s===2)half++; else if(s===4)hol++; }
-  const rate=parseFloat(document.getElementById('rateInput').value)||0;
+  const rate=currentEmpId?loadRate(currentEmpId,viewYear,viewMonth):0;
   renderBalance((full+(half*0.5)+hol)*rate, pays.reduce((s,p)=>s+p.amount,0));
 }
 function renderBalance(earned,paid){
@@ -757,6 +766,10 @@ function saveAllData(){
       if(k.startsWith('pay_'+emp.id+'_')){
         backup.data[emp.id].payments[k] = localStorage.getItem(k);
       }
+      if(k.startsWith('rate_'+emp.id+'_')){
+        backup.data[emp.id].rates = backup.data[emp.id].rates||{};
+        backup.data[emp.id].rates[k] = localStorage.getItem(k);
+      }
     });
   });
   const json = JSON.stringify(backup, null, 2);
@@ -785,7 +798,7 @@ function exportCSV(){
   meta.employees.forEach(emp => {
     const att = JSON.parse(localStorage.getItem(attKey(emp.id, viewYear, viewMonth))||'{}');
     const pays = JSON.parse(localStorage.getItem(payKey(emp.id, viewYear, viewMonth))||'[]');
-    const rate = emp.rate || 0;
+    const rate = loadRate(emp.id, viewYear, viewMonth);
 
     let full=0, half=0, hol=0;
     for(let d=1;d<=dim;d++){
