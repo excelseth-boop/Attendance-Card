@@ -85,6 +85,7 @@ body{
 .pin-action{background:#eaf0ff;border-color:#92b4f5;color:var(--accent)}
 .save-action{background:#f0fff4;border-color:#6ee7a0;color:#065f2c}
 .export-action{background:#fdf4ff;border-color:#d8a8f0;color:#6b21a8}
+.import-action{background:#fff8e8;border-color:#f5c842;color:#7a5500}
 
 /* Stats bar */
 .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px}
@@ -259,6 +260,31 @@ body{
 .confirm-ok{flex:1;background:var(--red);border:none;border-radius:9px;color:#fff;font-family:'Inter',sans-serif;font-size:14px;font-weight:700;padding:10px;cursor:pointer}
 .confirm-ok:active{opacity:0.85}
 
+/* ── IMPORT MODAL ── */
+.import-modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+  z-index:800;align-items:center;justify-content:center;padding:20px;
+}
+.import-modal-overlay.open{display:flex}
+.import-modal{
+  background:var(--surface);border-radius:16px;padding:22px 20px 20px;
+  width:100%;max-width:340px;box-shadow:0 8px 40px rgba(0,0,0,0.18);
+  animation:popIn 0.2s ease;
+}
+.import-modal h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px}
+.import-modal p{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:16px}
+.import-info{
+  background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;
+  padding:10px 12px;margin-bottom:14px;font-size:11px;color:var(--text2);
+  display:none;line-height:1.6;
+}
+.import-info.show{display:block}
+.import-modal-btns{display:flex;gap:9px}
+.import-cancel{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:9px;color:var(--muted);font-family:'Inter',sans-serif;font-size:13px;font-weight:600;padding:9px;cursor:pointer}
+.import-confirm{flex:2;background:var(--accent);border:none;border-radius:9px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:9px;cursor:pointer;display:none}
+.import-confirm.show{display:block}
+.import-choose{flex:2;background:var(--green);border:none;border-radius:9px;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:9px;cursor:pointer}
+
 /* ── TOAST ── */
 .toast{
   position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(14px);
@@ -390,9 +416,10 @@ body{
   <div class="action-row">
     <button class="action-btn reset-action" id="resetBtn">🗑 Reset</button>
     <button class="action-btn pin-action" id="pinBtn">🔐 PIN</button>
-    <button class="action-btn save-action" id="saveBtn">💾 Save</button>
-    <button class="action-btn export-action" id="exportBtn">📤 CSV</button>
+    <button class="action-btn save-action" id="exportJsonBtn">📥 Export</button>
+    <button class="action-btn import-action" id="importJsonBtn">📤 Import</button>
   </div>
+  <input type="file" id="importFileInput" accept=".json" style="display:none">
 
   <div class="stats-bar">
     <div class="stat-card"><div class="stat-val green" id="cntFull">0</div><div class="stat-lbl">Full</div></div>
@@ -438,6 +465,20 @@ body{
       <div class="bal-cell"><div class="bal-label">Balance</div><div class="bal-val due" id="balDue">₹0</div></div>
     </div>
     <div id="paymentList"></div>
+  </div>
+</div>
+
+<!-- ── IMPORT MODAL ── -->
+<div class="import-modal-overlay" id="importModalOverlay">
+  <div class="import-modal">
+    <h3>📤 Import Backup</h3>
+    <p>Select a previously exported <strong>attendance_backup_*.json</strong> file. All existing data will be merged (employee records preserved).</p>
+    <div class="import-info" id="importInfo"></div>
+    <div class="import-modal-btns">
+      <button class="import-cancel" onclick="closeImportModal()">Cancel</button>
+      <button class="import-choose" id="importChooseBtn" onclick="document.getElementById('importFileInput').click()">Choose File</button>
+      <button class="import-confirm" id="importConfirmBtn" onclick="confirmImport()">Restore Data</button>
+    </div>
   </div>
 </div>
 
@@ -753,24 +794,21 @@ function showToast(msg){ const t=document.getElementById('toast'); t.textContent
 
 
 /* ── SAVE (JSON backup to file) ── */
-function saveAllData(){
+/* ── EXPORT JSON ── */
+function exportJSON(){
   const meta = loadMeta();
-  const backup = { meta, version:1, exported: new Date().toISOString(), data:{} };
-  meta.employees.forEach(emp => {
-    backup.data[emp.id] = { employee: emp, attendance:{}, payments:{} };
-    // collect all months stored
-    Object.keys(localStorage).forEach(k => {
-      if(k.startsWith('att_'+emp.id+'_')){
-        backup.data[emp.id].attendance[k] = localStorage.getItem(k);
-      }
-      if(k.startsWith('pay_'+emp.id+'_')){
-        backup.data[emp.id].payments[k] = localStorage.getItem(k);
-      }
-      if(k.startsWith('rate_'+emp.id+'_')){
-        backup.data[emp.id].rates = backup.data[emp.id].rates||{};
-        backup.data[emp.id].rates[k] = localStorage.getItem(k);
-      }
-    });
+  const backup = {
+    version: 2,
+    exported: new Date().toISOString(),
+    exportedReadable: new Date().toLocaleString('en-IN'),
+    meta,
+    store: {}
+  };
+  // dump every relevant localStorage key
+  Object.keys(localStorage).forEach(k => {
+    if(k.startsWith('att_')||k.startsWith('pay_')||k.startsWith('rate_')||k===META_KEY||k===PIN_KEY){
+      backup.store[k] = localStorage.getItem(k);
+    }
   });
   const json = JSON.stringify(backup, null, 2);
   const blob = new Blob([json], {type:'application/json'});
@@ -778,9 +816,85 @@ function saveAllData(){
   const a    = document.createElement('a');
   a.href = url;
   a.download = 'attendance_backup_'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('Backup saved 💾');
+  showToast('Backup exported 📥');
+}
+
+/* ── IMPORT JSON ── */
+let importParsed = null;
+
+function openImportModal(){
+  importParsed = null;
+  document.getElementById('importInfo').className='import-info';
+  document.getElementById('importInfo').textContent='';
+  document.getElementById('importChooseBtn').style.display='';
+  document.getElementById('importConfirmBtn').className='import-confirm';
+  document.getElementById('importFileInput').value='';
+  document.getElementById('importModalOverlay').classList.add('open');
+}
+function closeImportModal(){
+  document.getElementById('importModalOverlay').classList.remove('open');
+  importParsed=null;
+}
+
+document.getElementById('importFileInput').addEventListener('change', function(){
+  const file=this.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const data=JSON.parse(e.target.result);
+      if(!data.store && !data.meta){ throw new Error('Invalid backup file'); }
+      importParsed=data;
+      // show summary
+      const empCount=data.meta&&data.meta.employees?data.meta.employees.length:0;
+      const empNames=data.meta&&data.meta.employees?data.meta.employees.map(x=>x.name).join(', '):'';
+      const storeCount=data.store?Object.keys(data.store).length:0;
+      const infoEl=document.getElementById('importInfo');
+      infoEl.innerHTML='<strong>File ready to restore:</strong><br>'
+        +'📅 Exported: '+(data.exportedReadable||data.exported||'Unknown')+'<br>'
+        +'👥 Employees ('+empCount+'): '+empNames+'<br>'
+        +'📦 Records: '+storeCount+' entries';
+      infoEl.className='import-info show';
+      document.getElementById('importChooseBtn').style.display='none';
+      document.getElementById('importConfirmBtn').className='import-confirm show';
+    }catch(err){
+      document.getElementById('importInfo').textContent='❌ Invalid file: '+err.message;
+      document.getElementById('importInfo').className='import-info show';
+    }
+  };
+  reader.readAsText(file);
+});
+
+async function confirmImport(){
+  if(!importParsed){ showToast('No file selected'); return; }
+  const ok=await showConfirm('Restore Backup',
+    'This will restore all employees, attendance, payments and rates from the backup. Current data will be overwritten.',
+    'Restore', false);
+  if(!ok) return;
+  try{
+    // Restore all keys
+    if(importParsed.store){
+      Object.entries(importParsed.store).forEach(([k,v])=>localStorage.setItem(k,v));
+    } else if(importParsed.data){
+      // v1 format fallback
+      if(importParsed.meta) localStorage.setItem(META_KEY, JSON.stringify(importParsed.meta));
+      Object.values(importParsed.data).forEach(empData=>{
+        Object.entries(empData.attendance||{}).forEach(([k,v])=>localStorage.setItem(k,v));
+        Object.entries(empData.payments||{}).forEach(([k,v])=>localStorage.setItem(k,v));
+        Object.entries(empData.rates||{}).forEach(([k,v])=>localStorage.setItem(k,v));
+      });
+    }
+    closeImportModal();
+    // Reload app state
+    const meta=loadMeta();
+    populateDropdown(null);
+    loadCurrentRate();
+    buildCalendar();
+    showToast('Data restored successfully ✅');
+  }catch(err){
+    showToast('Restore failed: '+err.message);
+  }
 }
 
 /* ── EXPORT CSV ── */
@@ -848,8 +962,8 @@ function exportCSV(){
 /* ── WIRE UP BUTTONS (no inline onclick issues) ── */
 document.getElementById('resetBtn').addEventListener('click', resetMonth);
 document.getElementById('pinBtn').addEventListener('click', openPinSetup);
-document.getElementById('saveBtn').addEventListener('click', saveAllData);
-document.getElementById('exportBtn').addEventListener('click', exportCSV);
+document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
+document.getElementById('importJsonBtn').addEventListener('click', openImportModal);
 document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('modalOverlay')) closeModal(); });
 document.getElementById('payModalOverlay').addEventListener('click', e=>{ if(e.target===document.getElementById('payModalOverlay')) closePayModal(); });
 
