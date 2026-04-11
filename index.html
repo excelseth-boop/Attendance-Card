@@ -866,34 +866,47 @@ document.getElementById('importFileInput').addEventListener('change', function()
   reader.readAsText(file);
 });
 
-async function confirmImport(){
+function confirmImport(){
   if(!importParsed){ showToast('No file selected'); return; }
-  const ok=await showConfirm('Restore Backup',
-    'This will restore all employees, attendance, payments and rates from the backup. Current data will be overwritten.',
-    'Restore', false);
-  if(!ok) return;
   try{
-    // Restore all keys
+    // Clear existing app data first
+    const keysToRemove = Object.keys(localStorage).filter(k =>
+      k.startsWith('att_') || k.startsWith('pay_') || k.startsWith('rate_') ||
+      k.startsWith('stamp_') || k === META_KEY
+    );
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+
+    // Restore all keys from backup
     if(importParsed.store){
-      Object.entries(importParsed.store).forEach(([k,v])=>localStorage.setItem(k,v));
+      // v2 format: flat store object
+      Object.entries(importParsed.store).forEach(([k,v]) => localStorage.setItem(k, v));
     } else if(importParsed.data){
       // v1 format fallback
       if(importParsed.meta) localStorage.setItem(META_KEY, JSON.stringify(importParsed.meta));
-      Object.values(importParsed.data).forEach(empData=>{
-        Object.entries(empData.attendance||{}).forEach(([k,v])=>localStorage.setItem(k,v));
-        Object.entries(empData.payments||{}).forEach(([k,v])=>localStorage.setItem(k,v));
-        Object.entries(empData.rates||{}).forEach(([k,v])=>localStorage.setItem(k,v));
+      Object.values(importParsed.data).forEach(empData => {
+        Object.entries(empData.attendance||{}).forEach(([k,v]) => localStorage.setItem(k, v));
+        Object.entries(empData.payments||{}).forEach(([k,v]) => localStorage.setItem(k, v));
+        Object.entries(empData.rates||{}).forEach(([k,v]) => localStorage.setItem(k, v));
       });
     }
+
+    const empCount = (importParsed.meta && importParsed.meta.employees) ? importParsed.meta.employees.length : '?';
     closeImportModal();
-    // Reload app state
-    const meta=loadMeta();
-    populateDropdown(null);
+    importParsed = null;
+
+    // Full reload of app state
+    const meta = loadMeta();
+    if(meta.employees && meta.employees.length > 0){
+      populateDropdown(meta.employees[0].id);
+    } else {
+      populateDropdown(null);
+    }
     loadCurrentRate();
     buildCalendar();
-    showToast('Data restored successfully ✅');
-  }catch(err){
-    showToast('Restore failed: '+err.message);
+    showToast('✅ Restored ' + empCount + ' employees');
+  } catch(err){
+    showToast('❌ Restore failed: ' + err.message);
+    console.error('Import error:', err);
   }
 }
 
