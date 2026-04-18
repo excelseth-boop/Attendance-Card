@@ -103,8 +103,82 @@ body{
 .total-pill.highlight{border-color:#92b4f5;background:#eaf0ff}
 .total-pill.highlight .t-val{color:var(--accent);font-size:20px}
 
+/* ── TAB BAR ── */
+.tab-bar{
+  display:flex;background:var(--surface);
+  border-bottom:1.5px solid var(--border);
+  flex-shrink:0;
+}
+.tab-btn{
+  flex:1;padding:8px 4px;text-align:center;
+  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
+  color:var(--muted);border:none;background:none;cursor:pointer;
+  border-bottom:2.5px solid transparent;transition:color 0.15s,border-color 0.15s;
+  letter-spacing:0.2px;
+}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
 /* ── SCROLLABLE BODY ── */
 .scroll-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0}
+
+/* ── SUMMARY TAB ── */
+.summary-wrap{padding:10px 10px 30px}
+.summary-month-title{
+  font-size:13px;font-weight:700;color:var(--text);
+  text-align:center;margin-bottom:10px;letter-spacing:-0.2px;
+}
+.summary-totals{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:7px;margin-bottom:12px;
+}
+.sum-total-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:10px;padding:9px 5px;text-align:center;
+  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+.sum-total-label{font-size:8px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px}
+.sum-total-val{font-size:17px;font-weight:800;letter-spacing:-0.5px;line-height:1}
+.sum-total-val.earned{color:var(--accent)}
+.sum-total-val.paid{color:var(--green)}
+.sum-total-val.balance{color:var(--red);font-size:19px}
+.sum-total-val.settled{color:#057a38}
+.sum-emp-list{display:flex;flex-direction:column;gap:8px}
+.sum-emp-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:11px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,0.05);
+}
+.sum-emp-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:var(--surface2);
+  border-bottom:1px solid var(--border);
+}
+.sum-emp-name{font-size:13px;font-weight:700;color:var(--text);letter-spacing:-0.2px}
+.sum-emp-days{font-size:10px;font-weight:500;color:var(--muted)}
+.sum-emp-row{display:grid;grid-template-columns:1fr 1fr 1fr}
+.sum-emp-cell{padding:8px 5px;text-align:center;border-right:1px solid var(--border)}
+.sum-emp-cell:last-child{border-right:none}
+.sum-emp-label{font-size:8px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px}
+.sum-emp-val{font-size:14px;font-weight:700;margin-top:2px;letter-spacing:-0.3px}
+.sum-emp-val.e{color:var(--accent)}
+.sum-emp-val.p{color:var(--green)}
+.sum-emp-val.b{color:var(--red)}
+.sum-emp-val.b.ok{color:#057a38}
+.sum-emp-stats{
+  display:flex;gap:0;border-top:1px solid var(--border);
+}
+.sum-stat-chip{
+  flex:1;padding:4px 2px;text-align:center;
+  border-right:1px solid var(--border);font-size:9px;font-weight:600;
+}
+.sum-stat-chip:last-child{border-right:none}
+.sum-stat-chip span{display:block;font-size:12px;font-weight:800;line-height:1;margin-bottom:1px}
+.sum-stat-chip.g span{color:var(--green)}
+.sum-stat-chip.y span{color:var(--yellow)}
+.sum-stat-chip.r span{color:var(--red)}
+.sum-stat-chip.gr span{color:var(--grey)}
 
 /* Legend */
 .legend{
@@ -435,8 +509,15 @@ body{
   </div>
 </div>
 
+<!-- ── TAB BAR ── -->
+<div class="tab-bar">
+  <button class="tab-btn active" id="tabAttendance" onclick="switchTab('attendance')">📅 Attendance</button>
+  <button class="tab-btn" id="tabSummary" onclick="switchTab('summary')">📊 Summary</button>
+</div>
+
 <!-- ── SCROLLABLE BODY ── -->
 <div class="scroll-body">
+  <div class="tab-panel active" id="panelAttendance">
   <div class="legend">
     <div class="leg-item"><div class="leg-dot" style="background:var(--green)"></div>Full Day</div>
     <div class="leg-item"><div class="leg-dot" style="background:var(--yellow)"></div>Half Day</div>
@@ -466,6 +547,30 @@ body{
     </div>
     <div id="paymentList"></div>
   </div>
+  </div><!-- end panelAttendance -->
+
+  <!-- ── SUMMARY TAB PANEL ── -->
+  <div class="tab-panel" id="panelSummary">
+    <div class="summary-wrap">
+      <div class="summary-month-title" id="summaryMonthTitle">April 2026 — All Employees</div>
+      <div class="summary-totals">
+        <div class="sum-total-card">
+          <div class="sum-total-label">Total Earned</div>
+          <div class="sum-total-val earned" id="sumTotalEarned">₹0</div>
+        </div>
+        <div class="sum-total-card">
+          <div class="sum-total-label">Total Paid</div>
+          <div class="sum-total-val paid" id="sumTotalPaid">₹0</div>
+        </div>
+        <div class="sum-total-card">
+          <div class="sum-total-label">Balance Due</div>
+          <div class="sum-total-val balance" id="sumTotalBalance">₹0</div>
+        </div>
+      </div>
+      <div class="sum-emp-list" id="sumEmpList"></div>
+    </div>
+  </div><!-- end panelSummary -->
+
 </div>
 
 <!-- ── IMPORT MODAL ── -->
@@ -642,7 +747,9 @@ function updateStats(){
 }
 
 function fi(n){ if(n===0)return'0'; const s=Math.round(n).toString(); if(s.length<=3)return s; const l=s.slice(-3),r=s.slice(0,-3); return r.replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+l; }
-function changeMonth(d){ viewMonth+=d; if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;} loadCurrentRate(); buildCalendar(); }
+function changeMonth(d){ viewMonth+=d; if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;} loadCurrentRate(); buildCalendar();
+  if(document.getElementById('panelSummary').classList.contains('active')) renderSummary();
+}
 
 async function resetMonth(){
   if(!currentEmpId){ showToast('No employee selected'); return; }
@@ -970,6 +1077,68 @@ function exportCSV(){
   a.click();
   URL.revokeObjectURL(url);
   showToast('CSV exported 📤');
+}
+
+/* ── TABS ── */
+function switchTab(tab){
+  document.getElementById('panelAttendance').className='tab-panel'+(tab==='attendance'?' active':'');
+  document.getElementById('panelSummary').className='tab-panel'+(tab==='summary'?' active':'');
+  document.getElementById('tabAttendance').className='tab-btn'+(tab==='attendance'?' active':'');
+  document.getElementById('tabSummary').className='tab-btn'+(tab==='summary'?' active':'');
+  if(tab==='summary') renderSummary();
+}
+
+function renderSummary(){
+  const meta=loadMeta();
+  const dim=new Date(viewYear,viewMonth+1,0).getDate();
+  document.getElementById('summaryMonthTitle').textContent=MONTHS[viewMonth]+' '+viewYear+' — All Employees';
+
+  let grandEarned=0, grandPaid=0;
+  const rows = meta.employees.map(emp=>{
+    const att=JSON.parse(localStorage.getItem(attKey(emp.id,viewYear,viewMonth))||'{}');
+    const pays=JSON.parse(localStorage.getItem(payKey(emp.id,viewYear,viewMonth))||'[]');
+    const rate=loadRate(emp.id,viewYear,viewMonth);
+    let full=0,half=0,absent=0,hol=0;
+    for(let d=1;d<=dim;d++){
+      const s=att[d]||0;
+      if(s===1)full++; else if(s===2)half++; else if(s===3)absent++; else if(s===4)hol++;
+    }
+    const payable=full+(half*0.5)+hol;
+    const earned=payable*rate;
+    const paid=pays.reduce((s,p)=>s+p.amount,0);
+    grandEarned+=earned; grandPaid+=paid;
+    return {emp,full,half,absent,hol,payable,earned,paid,balance:earned-paid,rate};
+  });
+
+  const grandBalance=grandEarned-grandPaid;
+  document.getElementById('sumTotalEarned').textContent='₹'+fi(grandEarned);
+  document.getElementById('sumTotalPaid').textContent='₹'+fi(grandPaid);
+  const balEl=document.getElementById('sumTotalBalance');
+  balEl.textContent=grandBalance<=0?'✓ Clear':'₹'+fi(grandBalance);
+  balEl.className='sum-total-val balance'+(grandBalance<=0?' settled':'');
+
+  document.getElementById('sumEmpList').innerHTML=rows.map(r=>{
+    const bal=r.balance;
+    const balClass='sum-emp-val b'+(bal<=0?' ok':'');
+    const balText=bal<=0?'✓ Clear':'₹'+fi(bal);
+    return `<div class="sum-emp-card">
+      <div class="sum-emp-header">
+        <span class="sum-emp-name">${r.emp.name}</span>
+        <span class="sum-emp-days">${r.payable%1===0?r.payable:r.payable.toFixed(1)} days · ₹${fi(r.rate)}/day</span>
+      </div>
+      <div class="sum-emp-row">
+        <div class="sum-emp-cell"><div class="sum-emp-label">Earned</div><div class="sum-emp-val e">₹${fi(r.earned)}</div></div>
+        <div class="sum-emp-cell"><div class="sum-emp-label">Paid</div><div class="sum-emp-val p">₹${fi(r.paid)}</div></div>
+        <div class="sum-emp-cell"><div class="sum-emp-label">Balance</div><div class="${balClass}">${balText}</div></div>
+      </div>
+      <div class="sum-emp-stats">
+        <div class="sum-stat-chip g"><span>${r.full}</span>Full</div>
+        <div class="sum-stat-chip y"><span>${r.half}</span>Half</div>
+        <div class="sum-stat-chip r"><span>${r.absent}</span>Absent</div>
+        <div class="sum-stat-chip gr"><span>${r.hol}</span>Holiday</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 /* ── WIRE UP BUTTONS (no inline onclick issues) ── */
